@@ -4,7 +4,7 @@
  * Postup nasadenia je v README.md.
  */
 const CONFIG = {
-  CLIENT_ID: 'VLOZTE-CLIENT-ID.apps.googleusercontent.com',
+  CLIENT_ID: '360446448624-q4u3huhlgho4ce4taptuofp0e4dveujp.apps.googleusercontent.com',
   DOMAIN: 'koharysuli.sk',
   SCHOOL_NAME: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
   COURSE_NAME: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
