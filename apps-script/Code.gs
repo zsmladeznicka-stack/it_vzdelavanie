@@ -50,7 +50,7 @@ function setup() {
     q.push([v, 'Ukážková otázka 1 k videu ' + v, 'Správna odpoveď', 'Nesprávna', 'Nesprávna', 'Nesprávna', 'A']);
     q.push([v, 'Ukážková otázka 2 k videu ' + v, 'Nesprávna', 'Správna odpoveď', 'Nesprávna', '', 'B']);
   }
-  make(SHEET.QUESTIONS, ['Video', 'Otázka', 'A', 'B', 'C', 'D', 'Správna (A–D alebo slovo)'], q);
+  make(SHEET.QUESTIONS, ['Video', 'Otázka', 'A', 'B', 'C', 'D', 'Správna (A–D)'], q);
   make(SHEET.PROGRESS, PROGRESS_HEADER);
   make(SHEET.CERTS, ['Číslo', 'E-mail', 'Meno', 'Dátum vydania']);
   make(SHEET.USERS, ['E-mail', 'Meno', 'Prvé prihlásenie', 'Termín ukončenia']);
@@ -147,33 +147,14 @@ function videos_() {
     .sort((a, b) => a.order - b.order);
 }
 
-/**
- * Otázka s možnosťami A–D má v stĺpci Správna písmeno.
- * Doplňovačka má stĺpce A–D prázdne a v stĺpci Správna očakávané slovo;
- * viac prijateľných odpovedí sa oddeľuje bodkočiarkou (napr. „heslo; heslá“).
- */
 function questions_(order) {
   return rows_(SHEET.QUESTIONS)
     .filter(r => Number(r[0]) === order && String(r[1]).trim())
-    .map(r => {
-      const options = [r[2], r[3], r[4], r[5]].map(String).filter(s => s.trim() !== '');
-      const key = String(r[6]).trim();
-      if (!options.length) {
-        return { text: String(r[1]), type: 'text', key: key, accepted: key.split(';').map(normalize_).filter(Boolean) };
-      }
-      return { text: String(r[1]), type: 'choice', options: options, correct: 'ABCD'.indexOf(key.toUpperCase()) };
-    });
-}
-
-/** Porovnanie doplňovačky: bez ohľadu na veľké písmená, diakritiku, interpunkciu a medzery. */
-function normalize_(s) {
-  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    .replace(/[.,!?;:"'„“()\-]/g, '').replace(/\s+/g, ' ').trim();
-}
-
-function isCorrect_(q, answer) {
-  if (q.type === 'text') return q.accepted.indexOf(normalize_(answer == null ? '' : answer)) !== -1;
-  return Number(answer) === q.correct;
+    .map(r => ({
+      text: String(r[1]),
+      options: [r[2], r[3], r[4], r[5]].map(String).filter(s => s.trim() !== ''),
+      correct: 'ABCD'.indexOf(String(r[6]).trim().toUpperCase()),
+    }));
 }
 
 function progress_(user) {
@@ -286,7 +267,7 @@ function startQuiz_(user, i) {
   if (rec.v[P.PASSED] === true) throw new Error('Tento test už máte splnený.');
   rec.v[P.QUIZ_START] = new Date();
   save_(rec);
-  return { questions: questions_(vids[i].order).map(q => ({ text: q.text, type: q.type, options: q.options || [] })) };
+  return { questions: questions_(vids[i].order).map(q => ({ text: q.text, options: q.options })) };
 }
 
 function submitQuiz_(user, i, answers) {
@@ -300,7 +281,7 @@ function submitQuiz_(user, i, answers) {
 
   const qs = questions_(vids[i].order);
   let correct = 0;
-  qs.forEach((q, k) => { if (isCorrect_(q, answers[k])) correct++; });
+  qs.forEach((q, k) => { if (Number(answers[k]) === q.correct) correct++; });
   const score = qs.length ? Math.round(correct / qs.length * 100) : 100;
   const passed = score >= CONFIG.PASS_PERCENT;
 
@@ -349,7 +330,7 @@ function god_(user, req) {
     }
     case 'godAnswers':
       if (!vids[i]) throw new Error('Neznáme video.');
-      return { correct: questions_(vids[i].order).map(q => (q.type === 'text' ? q.key : q.correct)) };
+      return { correct: questions_(vids[i].order).map(q => q.correct) };
     case 'godReset':
       deleteUserRows_(SHEET.PROGRESS, 0, user.email);
       deleteUserRows_(SHEET.USERS, 0, user.email);
