@@ -5,7 +5,8 @@ Učiteľ sa prihlási školským Google účtom (@koharysuli.sk). Potom postupne
 - Video sa nedá pretáčať dopredu ani zrýchliť.
 - Pri prepnutí karty, minimalizácii alebo prechode do iného okna sa video pozastaví.
 - Ďalšie video sa odomkne až po splnení testu (aspoň 80 %). Neúspešný test sa dá opakovať.
-- Priebeh sa ukladá do Google tabuľky, takže učiteľ môže pokračovať aj o niekoľko dní.
+- Testy nemajú časový limit.
+- Celé vzdelávanie treba dokončiť do **24 hodín od prvého prihlásenia**. Priebeh sa ukladá, takže v rámci tohto času možno prestať a pokračovať. Po uplynutí termínu sa už pokračovať nedá.
 - Server zaznamenáva pozretý čas podľa reálne uplynutého času. Video sa preto nedá „dopozerať“ rýchlejšie, ani keď niekto obíde prehrávač.
 - Správne odpovede sú len v tabuľke, prehliadač ich nikdy nedostane.
 
@@ -33,13 +34,14 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
 1. Prihláste sa školským účtom a vytvorte novú Google tabuľku, napr. „Kurz – administrácia“.
 2. Otvorte **Rozšírenia → Apps Script**.
 3. Obsah súboru `Code.gs` nahraďte obsahom `apps-script/Code.gs` z tohto projektu.
-4. Hore v `CONFIG` vyplňte `SCHOOL_NAME` a `COURSE_NAME`. Prípadne upravte `PASS_PERCENT` a `QUIZ_MINUTES`. `CLIENT_ID` doplníte v kroku 3.
+4. Názov školy a vzdelávania sú v `CONFIG` už vyplnené. Prípadne upravte `PASS_PERCENT` (hranica úspešnosti) a `HOURS_LIMIT` (časový limit). `CLIENT_ID` doplníte v kroku 3.
 5. Uložte, hore vyberte funkciu **setup** a kliknite **Spustiť**. Povoľte požadované oprávnenia.
    V tabuľke vzniknú hárky:
    - **Videa**: poradie, názov, YouTube ID, dĺžka v sekundách
    - **Otazky**: číslo videa, otázka, možnosti A–D (C a D môžu byť prázdne), správna odpoveď (písmeno)
    - **Priebeh**: tu priebežne vidíte, kto koľko pozrel a ako dopadli testy
    - **Osvedcenia**: zoznam vydaných osvedčení s číslami
+   - **Ucastnici**: čas prvého prihlásenia a termín ukončenia každého učiteľa
 6. Hárky **Videa** a **Otazky** prepíšte vlastnými údajmi. Ukážkové riadky zmažte.
 
 > Dĺžku videa zadajte presne alebo zaokrúhlite **nadol**. Video sa ráta ako dopozerané, keď učiteľovi chýba menej ako 15 sekúnd do konca.
@@ -78,10 +80,14 @@ Hotovo. Tento odkaz pošlete učiteľom.
 
 **Dá sa test opakovať?** Áno, neobmedzene. Do tabuľky sa zapisuje počet pokusov aj najlepšie skóre.
 
-**Čo ak učiteľ zavrie prehliadač uprostred videa?** Pri ďalšom prihlásení pokračuje od miesta, kde skončil (s presnosťou na približne 20 sekúnd).
+**Čo ak učiteľ zavrie prehliadač uprostred videa?** Pri ďalšom prihlásení pokračuje od miesta, kde skončil (s presnosťou na približne 20 sekúnd), ak ešte neuplynulo 24 hodín od prvého prihlásenia.
+
+**Čo ak učiteľ nestihne termín?** Aplikácia mu oznámi, že vzdelávanie už nemožno dokončiť. Ak mu chcete dať nový termín, v hárku **Ucastnici** zmažte jeho riadok. Nových 24 hodín sa začne rátať od ďalšieho prihlásenia. Ak má začať úplne odznova, zmažte aj jeho riadky v hárku **Priebeh**.
+
+**Platí osvedčenie aj po termíne?** Áno. Kto stihol splniť všetky testy včas, osvedčenie si môže zobraziť a stiahnuť aj neskôr.
 
 **Ako overím pravosť osvedčenia?** Číslo osvedčenia je uvedené v hárku **Osvedcenia** spolu s menom a dátumom.
 
-**Ako vynulujem priebeh učiteľa?** V hárku **Priebeh** zmažte jeho riadky. Ak treba, zmažte aj riadok v hárku **Osvedcenia**.
+**Ako vynulujem priebeh učiteľa?** Zmažte jeho riadky v hárkoch **Priebeh** a **Ucastnici**. Ak treba, zmažte aj riadok v hárku **Osvedcenia**.
 
 **Hranice ochrany:** Obmedzenia v prehliadači zastavia bežného používateľa. Minimalizácii okna sa zabrániť nedá, video sa iba pozastaví. Server navyše zaručuje, že video nemožno „pozrieť“ rýchlejšie, než trvá. Technicky zdatný človek by však mohol nechať video bežať napríklad stlmené na druhej obrazovke.

@@ -16,7 +16,7 @@ window.DemoApi = (() => {
 
   const load = () => {
     try { memory = JSON.parse(localStorage.getItem(KEY)) || memory; } catch (e) { /* bez úložiska */ }
-    return memory || { user: null, progress: VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 })), cert: null };
+    return memory || { user: null, deadline: 0, progress: VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 })), cert: null };
   };
   const save = (db) => {
     memory = db;
@@ -25,15 +25,18 @@ window.DemoApi = (() => {
 
   const state = (db) => ({
     user: db.user,
-    school: 'Názov školy',
-    course: 'Ukážkové vzdelávanie',
+    school: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
+    course: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
     passPercent: 80,
-    quizMinutes: 10,
+    hoursLimit: 24,
+    deadline: db.deadline,
+    now: Date.now(),
     videos: VIDEOS.map((v, i) => Object.assign({}, v, db.progress[i])),
     certificate: db.cert,
   });
 
   const unlocked = (db, i) => {
+    if (Date.now() > db.deadline) throw new Error('DEADLINE');
     if (!VIDEOS[i]) throw new Error('Neznáme video.');
     for (let k = 0; k < i; k++) if (!db.progress[k].quizPassed) throw new Error('Najprv dokončite predchádzajúce video a test.');
     return db.progress[i];
@@ -42,6 +45,7 @@ window.DemoApi = (() => {
   const actions = {
     login(db, d) {
       db.user = { email: 'ucitel@koharysuli.sk', name: d.name || 'Ukážkový učiteľ' };
+      if (!db.deadline) db.deadline = Date.now() + 24 * 3600 * 1000;
       return Object.assign({ session: 'demo' }, state(db));
     },
     state: (db) => state(db),
@@ -55,7 +59,7 @@ window.DemoApi = (() => {
     quiz(db, d) {
       const p = unlocked(db, d.video);
       if (!p.videoDone) throw new Error('Najprv dopozerajte video.');
-      return { questions: QUESTIONS[d.video].map(q => ({ text: q.text, options: q.options })), seconds: 600 };
+      return { questions: QUESTIONS[d.video].map(q => ({ text: q.text, options: q.options })) };
     },
     submit(db, d) {
       const p = unlocked(db, d.video);
@@ -66,7 +70,7 @@ window.DemoApi = (() => {
       p.tries++;
       p.best = Math.max(p.best, score);
       if (passed) p.quizPassed = true;
-      return { score, correct, total: qs.length, passed, late: false };
+      return { score, correct, total: qs.length, passed };
     },
     certificate(db) {
       if (!db.progress.every(p => p.quizPassed)) throw new Error('Kurz ešte nie je dokončený.');
@@ -77,7 +81,7 @@ window.DemoApi = (() => {
 
   return {
     call(action, data) {
-      return new Promise((resolve, reject) => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           try {
             const db = load();
@@ -85,7 +89,7 @@ window.DemoApi = (() => {
             save(db);
             resolve(JSON.parse(JSON.stringify(out)));
           } catch (e) {
-            reject(e);
+            resolve({ error: e.message });
           }
         }, 150);
       });

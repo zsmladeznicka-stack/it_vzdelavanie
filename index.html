@@ -39,7 +39,8 @@
     <section id="view-home" hidden>
       <div class="card">
         <h1>Dobrý deň, <span id="hello-name"></span></h1>
-        <p class="muted">Videá a testy sa odomykajú postupne. Video treba dopozerať celé – nedá sa pretáčať a pri odchode z okna sa pozastaví. Priebeh sa ukladá, môžete kedykoľvek prestať a pokračovať neskôr.</p>
+        <p class="muted">Videá a testy sa odomykajú postupne. Video treba dopozerať celé – nedá sa pretáčať a pri odchode z okna sa pozastaví. Priebeh sa ukladá, takže môžete prestať a pokračovať neskôr – najneskôr však do termínu nižšie.</p>
+        <div id="deadline" class="banner warn" hidden></div>
         <ol id="steps" class="steps"></ol>
         <button id="next-action" class="btn primary big"></button>
       </div>
@@ -74,7 +75,6 @@
     <section id="view-quiz" hidden>
       <div class="quiz-head">
         <h2 id="quiz-title"></h2>
-        <div class="timer" id="timer">10:00</div>
       </div>
       <form id="quiz-form"></form>
       <button id="quiz-submit" class="btn primary big">Odovzdať test</button>

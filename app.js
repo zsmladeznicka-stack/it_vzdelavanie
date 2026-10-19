@@ -60,6 +60,10 @@
       });
       out = await res.json();
     }
+    if (out.error === 'DEADLINE') {
+      onDeadline();
+      throw new Error('Čas na absolvovanie vzdelávania uplynul.');
+    }
     if (out.error === 'SESSION_EXPIRED') {
       logout('Platnosť prihlásenia vypršala. Prihláste sa znova – váš priebeh je uložený.');
       throw new Error('Platnosť prihlásenia vypršala.');
@@ -128,7 +132,8 @@
   function setState(r) {
     state = {
       user: r.user, school: r.school, course: r.course, passPercent: r.passPercent,
-      quizMinutes: r.quizMinutes, videos: r.videos, certificate: r.certificate,
+      hoursLimit: r.hoursLimit, deadline: r.deadline, clockOffset: r.now - Date.now(),
+      videos: r.videos, certificate: r.certificate,
     };
     $('#course-name').textContent = state.course;
     document.title = state.course;
@@ -137,6 +142,21 @@
   }
 
   // ---------- Prehľad ----------
+
+  function isExpired() {
+    return Date.now() + state.clockOffset > state.deadline;
+  }
+
+  function fmtDateTime(ms) {
+    return new Date(ms).toLocaleString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
+  function onDeadline() {
+    if (!isExpired()) state.deadline = Date.now() + state.clockOffset - 1; // server rozhodol, že termín uplynul
+    closePlayer();
+    clearInterval(deadlineTimer);
+    renderHome();
+  }
 
   function currentIndex() {
     return state.videos.findIndex((v) => !v.quizPassed); // -1 = všetko splnené
@@ -155,7 +175,7 @@
       html += `<li class="${vCls}">${icon(vCls, n++)}<span>Video ${i + 1}: ${esc(v.title)}
         <span class="sub">${fmt(v.duration)}${progress}</span></span></li>`;
       const qCls = v.quizPassed ? 'done' : i === cur && v.videoDone ? 'current' : '';
-      const qSub = v.quizPassed ? `splnený (${v.best} %)` : v.tries ? `pokusy: ${v.tries}, najlepšie ${v.best} %` : `${state.quizMinutes} min, potrebných ${state.passPercent} %`;
+      const qSub = v.quizPassed ? `splnený (${v.best} %)` : v.tries ? `pokusy: ${v.tries}, najlepšie ${v.best} %` : `potrebných ${state.passPercent} %`;
       html += `<li class="${qCls}">${icon(qCls, n++)}<span>Test k videu ${i + 1}<span class="sub">${qSub}</span></span></li>`;
     });
     const cCls = state.certificate ? 'done' : cur === -1 ? 'current' : '';
@@ -163,6 +183,22 @@
     $('#steps').innerHTML = html;
 
     const btn = $('#next-action');
+    const dl = $('#deadline');
+    btn.hidden = false;
+    if (cur === -1) {
+      dl.hidden = true;
+    } else if (isExpired()) {
+      dl.className = 'banner error';
+      dl.textContent = `Čas na absolvovanie vzdelávania (${state.hoursLimit} hodín od prvého prihlásenia) uplynul `
+        + `${fmtDateTime(state.deadline)}. Vzdelávanie už nie je možné dokončiť. Obráťte sa na administrátora.`;
+      dl.hidden = false;
+      btn.hidden = true;
+    } else {
+      dl.className = 'banner warn';
+      dl.textContent = `Celé vzdelávanie je potrebné dokončiť do ${fmtDateTime(state.deadline)} `
+        + `(${state.hoursLimit} hodín od prvého prihlásenia).`;
+      dl.hidden = false;
+    }
     if (cur === -1) {
       btn.textContent = 'Zobraziť osvedčenie';
       btn.onclick = openCert;
@@ -179,6 +215,7 @@
   // ---------- Video ----------
 
   const ytApi = new Promise((resolve) => { window.onYouTubeIframeAPIReady = resolve; });
+  let deadlineTimer = null;
   let player = null, tick = null, vIndex = -1, maxWatched = 0, lastBeatAt = 0, beatBusy = false, beatAgain = false;
 
   function loadYouTube() {
@@ -211,6 +248,8 @@
     setNotice(v.watched > 0 && !v.videoDone ? `Pokračujete od ${fmt(v.watched)}.` : '');
     updateBar(maxWatched);
     show('video');
+    clearInterval(deadlineTimer);
+    deadlineTimer = setInterval(() => { if (isExpired()) onDeadline(); }, 5000);
     await ytApi;
     if (vIndex !== i) return;
     $('#yt-host').innerHTML = '<div id="yt"></div>';
@@ -236,6 +275,7 @@
 
   function closePlayer() {
     clearInterval(tick);
+    clearInterval(deadlineTimer);
     tick = null;
     if (player) {
       if (isPlaying()) player.pauseVideo();
@@ -335,7 +375,7 @@
       showError(err.message);
       return;
     }
-    quiz = { index: i, questions: r.questions, endsAt: Date.now() + r.seconds * 1000, timer: null };
+    quiz = { index: i, questions: r.questions };
     $('#quiz-title').textContent = `Test k videu ${i + 1}`;
     $('#quiz-form').innerHTML = r.questions.map((q, k) => `
       <fieldset class="question">
@@ -343,26 +383,16 @@
         ${q.options.map((o, j) => `<label><input type="radio" name="q${k}" value="${j}"> <span>${esc(o)}</span></label>`).join('')}
       </fieldset>`).join('');
     $('#quiz-submit').disabled = false;
-    updateTimer();
-    quiz.timer = setInterval(updateTimer, 500);
     show('quiz');
   }
 
-  function updateTimer() {
-    const left = Math.max(0, Math.round((quiz.endsAt - Date.now()) / 1000));
-    $('#timer').textContent = fmt(left);
-    $('#timer').classList.toggle('low', left <= 60);
-    if (left === 0) submitQuiz(true);
-  }
-
-  async function submitQuiz(auto) {
+  async function submitQuiz() {
     if (!quiz || $('#quiz-submit').disabled) return;
     const answers = quiz.questions.map((q, k) => {
       const c = document.querySelector(`input[name="q${k}"]:checked`);
       return c ? Number(c.value) : -1;
     });
-    if (!auto && answers.includes(-1) && !confirm('Niektoré otázky nemáte zodpovedané. Naozaj chcete test odovzdať?')) return;
-    clearInterval(quiz.timer);
+    if (answers.includes(-1) && !confirm('Niektoré otázky nemáte zodpovedané. Naozaj chcete test odovzdať?')) return;
     $('#quiz-submit').disabled = true;
     const i = quiz.index;
     let r;
@@ -386,7 +416,6 @@
     let html = `<h1>Test k videu ${i + 1}</h1>
       <div class="score ${r.passed ? 'ok' : 'bad'}">${r.score} %</div>
       <p>Správne odpovede: ${r.correct} z ${r.total}</p>`;
-    if (r.late) html += '<p class="banner warn">Test bol odovzdaný po uplynutí času.</p>';
     if (r.passed) {
       html += `<p>Test ste úspešne splnili.</p>
         <button class="btn primary big" id="result-next">${last ? 'Získať osvedčenie' : `Pokračovať na video ${i + 2}`}</button>`;
@@ -416,7 +445,7 @@
     }
     const c = state.certificate;
     const total = state.videos.reduce((s, v) => s + v.duration, 0);
-    $('#cert-school').textContent = state.school;
+    $('#cert-school').textContent = state.school.replace(' - ', '\n');
     $('#cert-name').textContent = c.name;
     $('#cert-course').textContent = '„' + state.course + '“';
     $('#cert-text').textContent = `Vzdelávanie v rozsahu ${fmtLong(total)} pozostávalo z ${state.videos.length} videí `
@@ -456,7 +485,7 @@
     if (document.fullscreenElement) document.exitFullscreen();
     else $('#player-box').requestFullscreen();
   };
-  $('#quiz-submit').onclick = () => submitQuiz(false);
+  $('#quiz-submit').onclick = submitQuiz;
   $('#quiz-form').onsubmit = (e) => e.preventDefault();
   $('#cert-back').onclick = renderHome;
   $('#cert-print').onclick = () => window.print();

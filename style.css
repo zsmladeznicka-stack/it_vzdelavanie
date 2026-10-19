@@ -119,9 +119,7 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
 .player-box:fullscreen .player-frame { flex: 1; aspect-ratio: auto; }
 
 /* Test */
-.quiz-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; position: sticky; top: 0; background: var(--bg); padding: 8px 0; z-index: 1; }
-.timer { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; padding: 4px 12px; border-radius: 8px; background: var(--surface); border: 1px solid var(--line); }
-.timer.low { color: var(--err); border-color: var(--err); }
+.quiz-head { margin-bottom: 16px; }
 .question { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; margin: 0 0 12px; }
 .question legend { font-weight: 600; padding: 0; float: left; width: 100%; margin-bottom: 8px; }
 .question label { font-weight: 400; display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; cursor: pointer; clear: both; }
@@ -155,7 +153,7 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
   text-align: center;
   gap: 1cqw;
 }
-.cert-school { font-size: 2cqw; letter-spacing: .1em; text-transform: uppercase; color: #5f6878; }
+.cert-school { font-size: 1.9cqw; line-height: 1.4; white-space: pre-line; color: #5f6878; }
 .cert-title { font-size: 6cqw; letter-spacing: .15em; color: #8b6b2e; margin-top: 1cqw; }
 .cert-small { font-size: 1.8cqw; color: #5f6878; }
 .cert-name { font-size: 4.2cqw; font-weight: 700; margin: 1cqw 0; border-bottom: 1px solid #c9b78f; padding: 0 3cqw .6cqw; }

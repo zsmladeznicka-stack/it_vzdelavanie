@@ -6,14 +6,14 @@
 const CONFIG = {
   CLIENT_ID: 'VLOZTE-CLIENT-ID.apps.googleusercontent.com',
   DOMAIN: 'koharysuli.sk',
-  SCHOOL_NAME: 'Názov školy',
-  COURSE_NAME: 'Názov vzdelávania',
+  SCHOOL_NAME: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
+  COURSE_NAME: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
   CERT_PREFIX: 'OSV',
   PASS_PERCENT: 80,
-  QUIZ_MINUTES: 10,
+  HOURS_LIMIT: 24, // celý kurz treba dokončiť do tohto počtu hodín od prvého prihlásenia
 };
 
-const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia' };
+const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici' };
 
 // Stĺpce hárku Priebeh (jeden riadok = jeden učiteľ × jedno video)
 const P = { EMAIL: 0, NAME: 1, VIDEO: 2, WATCHED: 3, DURATION: 4, DONE: 5, BEAT: 6, QUIZ_START: 7, TRIES: 8, BEST: 9, PASSED: 10, PASSED_AT: 11 };
@@ -48,6 +48,7 @@ function setup() {
   make(SHEET.QUESTIONS, ['Video', 'Otázka', 'A', 'B', 'C', 'D', 'Správna (A–D)'], q);
   make(SHEET.PROGRESS, PROGRESS_HEADER);
   make(SHEET.CERTS, ['Číslo', 'E-mail', 'Meno', 'Dátum vydania']);
+  make(SHEET.USERS, ['E-mail', 'Meno', 'Prvé prihlásenie', 'Termín ukončenia']);
 }
 
 function doGet() {
@@ -68,12 +69,13 @@ function handle_(req) {
   if (req.action === 'login') return login_(req.idToken);
   const user = getSession_(req.session);
   if (!user) return { error: 'SESSION_EXPIRED' };
+  if (req.action === 'state') return state_(user);
+  if (req.action === 'certificate') return withLock_(() => certificate_(user)); // splnený kurz platí aj po termíne
+  if (Date.now() > deadline_(user)) return { error: 'DEADLINE' };
   switch (req.action) {
-    case 'state': return state_(user);
     case 'heartbeat': return withLock_(() => heartbeat_(user, Number(req.video), Number(req.position)));
     case 'quiz': return withLock_(() => startQuiz_(user, Number(req.video)));
     case 'submit': return withLock_(() => submitQuiz_(user, Number(req.video), req.answers));
-    case 'certificate': return withLock_(() => certificate_(user));
   }
   return { error: 'Neznáma akcia.' };
 }
@@ -92,7 +94,18 @@ function login_(idToken) {
   const user = { email: String(t.email).toLowerCase(), name: t.name || t.email };
   const session = Utilities.getUuid();
   CacheService.getScriptCache().put('s_' + session, JSON.stringify(user), SESSION_SECONDS);
+  withLock_(() => deadline_(user));
   return Object.assign({ session: session }, state_(user));
+}
+
+/** Termín ukončenia kurzu (ms). Pri prvom prihlásení sa učiteľ zapíše do hárku Ucastnici. */
+function deadline_(user) {
+  const row = rows_(SHEET.USERS).find(r => String(r[0]).toLowerCase() === user.email);
+  if (row && row[3] instanceof Date) return row[3].getTime();
+  const first = new Date();
+  const deadline = new Date(first.getTime() + CONFIG.HOURS_LIMIT * 3600 * 1000);
+  sheet_(SHEET.USERS).appendRow([user.email, user.name, first, deadline]);
+  return deadline.getTime();
 }
 
 function getSession_(session) {
@@ -199,7 +212,9 @@ function state_(user) {
     school: CONFIG.SCHOOL_NAME,
     course: CONFIG.COURSE_NAME,
     passPercent: CONFIG.PASS_PERCENT,
-    quizMinutes: CONFIG.QUIZ_MINUTES,
+    hoursLimit: CONFIG.HOURS_LIMIT,
+    deadline: deadline_(user),
+    now: Date.now(),
     videos: videos,
     certificate: findCert_(user.email),
   };
@@ -241,10 +256,7 @@ function startQuiz_(user, i) {
   if (rec.v[P.PASSED] === true) throw new Error('Tento test už máte splnený.');
   rec.v[P.QUIZ_START] = new Date();
   save_(rec);
-  return {
-    questions: questions_(vids[i].order).map(q => ({ text: q.text, options: q.options })),
-    seconds: CONFIG.QUIZ_MINUTES * 60,
-  };
+  return { questions: questions_(vids[i].order).map(q => ({ text: q.text, options: q.options })) };
 }
 
 function submitQuiz_(user, i, answers) {
@@ -256,11 +268,10 @@ function submitQuiz_(user, i, answers) {
   if (!start) throw new Error('Test nebol spustený.');
   answers = Array.isArray(answers) ? answers : [];
 
-  const late = Date.now() - start > (CONFIG.QUIZ_MINUTES * 60 + 90) * 1000;
   const qs = questions_(vids[i].order);
   let correct = 0;
   qs.forEach((q, k) => { if (Number(answers[k]) === q.correct) correct++; });
-  const score = late ? 0 : (qs.length ? Math.round(correct / qs.length * 100) : 100);
+  const score = qs.length ? Math.round(correct / qs.length * 100) : 100;
   const passed = score >= CONFIG.PASS_PERCENT;
 
   rec.v[P.QUIZ_START] = '';
@@ -271,7 +282,7 @@ function submitQuiz_(user, i, answers) {
     rec.v[P.PASSED_AT] = new Date();
   }
   save_(rec);
-  return { score: score, correct: late ? 0 : correct, total: qs.length, passed: passed, late: late };
+  return { score: score, correct: correct, total: qs.length, passed: passed };
 }
 
 // ---------- Osvedčenie ----------
