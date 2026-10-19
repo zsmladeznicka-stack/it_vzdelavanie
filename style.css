@@ -184,7 +184,7 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
 .cert-small { font-size: 1.8cqw; color: #5f6878; }
 .cert-name { font-size: 4.2cqw; font-weight: 700; margin: 1cqw 0; border-bottom: 1px solid #c9b78f; padding: 0 3cqw .6cqw; }
 .cert-course { font-size: 2.8cqw; font-style: italic; }
-.cert-text { font-size: 1.6cqw; color: #5f6878; max-width: 80%; margin-top: 1cqw; }
+.cert-text { font-size: 2cqw; max-width: 80%; margin-top: 1.5cqw; }
 .cert-foot { margin-top: auto; width: 100%; display: flex; justify-content: space-between; align-items: flex-end; font-size: 1.5cqw; text-align: left; }
 .cert-foot .sign { border-top: 1px solid #1d2330; padding-top: .5cqw; width: 28%; text-align: center; color: #5f6878; }
 

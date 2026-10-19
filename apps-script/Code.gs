@@ -8,6 +8,7 @@ const CONFIG = {
   DOMAIN: 'koharysuli.sk',
   SCHOOL_NAME: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
   COURSE_NAME: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
+  COURSE_HOURS: 10, // rozsah vzdelávania uvedený na osvedčení
   CERT_PREFIX: 'OSV',
   PASS_PERCENT: 80,
   WATCH_PERCENT: 98, // koľko percent videa treba pozrieť, aby sa odomkol test
@@ -213,6 +214,7 @@ function state_(user) {
     user: user,
     school: CONFIG.SCHOOL_NAME,
     course: CONFIG.COURSE_NAME,
+    courseHours: CONFIG.COURSE_HOURS,
     passPercent: CONFIG.PASS_PERCENT,
     hoursLimit: CONFIG.HOURS_LIMIT,
     deadline: deadline_(user),

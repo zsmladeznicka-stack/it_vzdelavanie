@@ -38,11 +38,6 @@
     return (h ? h + ':' : '') + mm + ':' + String(s).padStart(2, '0');
   }
 
-  function fmtLong(sec) {
-    const h = Math.floor(sec / 3600), m = Math.round(sec / 60) % 60;
-    return (h ? h + ' h ' : '') + m + ' min';
-  }
-
   function showError(msg) {
     const el = $('#error');
     el.textContent = msg || '';
@@ -131,7 +126,7 @@
 
   function setState(r) {
     state = {
-      user: r.user, school: r.school, course: r.course, passPercent: r.passPercent,
+      user: r.user, school: r.school, course: r.course, courseHours: r.courseHours, passPercent: r.passPercent,
       hoursLimit: r.hoursLimit, deadline: r.deadline, clockOffset: r.now - Date.now(),
       videos: r.videos, certificate: r.certificate,
     };
@@ -445,12 +440,10 @@
       return;
     }
     const c = state.certificate;
-    const total = state.videos.reduce((s, v) => s + v.duration, 0);
     $('#cert-school').textContent = state.school.replace(' - ', '\n');
     $('#cert-name').textContent = c.name;
     $('#cert-course').textContent = '„' + state.course + '“';
-    $('#cert-text').textContent = `Vzdelávanie v rozsahu ${fmtLong(total)} pozostávalo z ${state.videos.length} videí `
-      + `a ${state.videos.length} testov, každý splnený s úspešnosťou najmenej ${state.passPercent} %.`;
+    $('#cert-text').textContent = `Vzdelávanie v rozsahu ${state.courseHours} hodín`;
     $('#cert-date').textContent = c.date;
     $('#cert-id').textContent = c.id;
     show('cert');

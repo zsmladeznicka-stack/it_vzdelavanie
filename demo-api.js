@@ -30,6 +30,7 @@ window.DemoApi = (() => {
     user: db.user,
     school: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
     course: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
+    courseHours: 10,
     passPercent: 80,
     hoursLimit: 24,
     deadline: db.deadline,
