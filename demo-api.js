@@ -3,7 +3,7 @@
 // Videá sa v ukážke rátajú ako dopozerané po 60 sekundách.
 window.DemoApi = (() => {
   const VIDEOS = [
-    { title: 'Vitajte v spleti sociálnych sietí', youtubeId: 'NpNKSyQhZGU', duration: 4440 },
+    { title: 'Vitajte v spleti sociálnych sietí', youtubeId: '8Y-4Xv8t68M', duration: 4440 },
     { title: 'Úvod do informačnej bezpečnosti', youtubeId: '1W2Una0nT1U', duration: 3500 },
     { title: 'Nástroje Canvy využívajúce umelú inteligenciu', youtubeId: 'OAN3jZFkdfk', duration: 4457 },
     { title: 'Využitie QR kódov a rozšírenej reality vo vyučovaní', youtubeId: 'Ye0Ed6noRGI', duration: 3510 },
