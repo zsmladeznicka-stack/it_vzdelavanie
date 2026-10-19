@@ -1,17 +1,20 @@
 // Ukážkový režim: napodobňuje backend (apps-script/Code.gs) v prehliadači,
 // aby sa dala aplikácia vyskúšať bez nastavenia Google služieb.
-// Ukážkové videá sa rátajú ako dopozerané po 60 sekundách.
+// Videá sa v ukážke rátajú ako dopozerané po 60 sekundách.
 window.DemoApi = (() => {
   const VIDEOS = [
-    { title: 'Ukážkové video 1', youtubeId: 'aqz-KE-bpKQ', duration: 60 },
-    { title: 'Ukážkové video 2', youtubeId: 'aqz-KE-bpKQ', duration: 60 },
-    { title: 'Ukážkové video 3', youtubeId: 'aqz-KE-bpKQ', duration: 60 },
+    { title: 'Vitajte v spleti sociálnych sietí', youtubeId: 'NpNKSyQhZGU', duration: 4440 },
+    { title: 'Úvod do informačnej bezpečnosti', youtubeId: '1W2Una0nT1U', duration: 3500 },
+    { title: 'Nástroje Canvy využívajúce umelú inteligenciu', youtubeId: 'OAN3jZFkdfk', duration: 4457 },
+    { title: 'Využitie QR kódov a rozšírenej reality vo vyučovaní', youtubeId: 'Ye0Ed6noRGI', duration: 3510 },
+    { title: 'Kolaborácia žiakov na digitálnych boardoch počas a mimo vyučovania', youtubeId: 'GdD_emxfcWM', duration: 3576 },
   ];
+  const DEMO_WATCH_SECONDS = 60; // v ukážke sa video ráta ako dopozerané po 1 minúte
   const QUESTIONS = VIDEOS.map((v, i) => [
     { text: `Ukážková otázka 1 k videu ${i + 1}: ktorá odpoveď je správna?`, options: ['Táto', 'Nie táto', 'Ani táto'], correct: 0 },
     { text: `Ukážková otázka 2 k videu ${i + 1}: koľko je 2 + 2?`, options: ['3', '4', '5', '22'], correct: 1 },
   ]);
-  const KEY = 'kurz-demo';
+  const KEY = 'kurz-demo-v2';
   let memory = null;
 
   const load = () => {
@@ -51,9 +54,8 @@ window.DemoApi = (() => {
     state: (db) => state(db),
     heartbeat(db, d) {
       const p = unlocked(db, d.video);
-      const dur = VIDEOS[d.video].duration;
-      p.watched = Math.max(p.watched, Math.min(d.position, dur));
-      if (p.watched >= dur * 0.98) p.videoDone = true;
+      p.watched = Math.max(p.watched, Math.min(d.position, VIDEOS[d.video].duration));
+      if (p.watched >= DEMO_WATCH_SECONDS) p.videoDone = true;
       return { watched: p.watched, videoDone: p.videoDone };
     },
     quiz(db, d) {
