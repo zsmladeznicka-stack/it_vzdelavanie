@@ -32,6 +32,7 @@ window.DemoApi = (() => {
     course: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
     courseHours: 10,
     passPercent: 80,
+    watchPercent: 98,
     hoursLimit: 24,
     deadline: db.deadline,
     now: Date.now(),

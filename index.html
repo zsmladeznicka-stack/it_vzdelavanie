@@ -49,8 +49,11 @@
     <section id="view-home" hidden>
       <div class="card">
         <h1>Dobrý deň, <span id="hello-name"></span></h1>
-        <p class="muted">Videá a testy sa odomykajú postupne. Video treba dopozerať celé – nedá sa pretáčať a pri odchode z okna sa pozastaví. Priebeh sa ukladá, takže môžete prestať a pokračovať neskôr – najneskôr však do termínu nižšie.</p>
         <div id="deadline" class="banner warn" hidden></div>
+        <details id="howto" class="howto">
+          <summary>Ako funguje vzdelávanie – prečítajte si pred začatím</summary>
+          <div id="howto-body"></div>
+        </details>
         <button id="next-action" class="btn primary big"></button>
         <ol id="steps" class="steps"></ol>
       </div>
@@ -61,10 +64,9 @@
         <button class="btn ghost" id="video-back">← Prehľad</button>
         <h2 id="video-title"></h2>
       </div>
-      <div class="rules">
+      <div class="rules" id="rules">
         <span class="rules-icon" aria-hidden="true">!</span>
-        <div><strong>Video nie je možné pretáčať dopredu ani zrýchliť.</strong><br>
-        <strong>Ak prepnete na iné okno alebo kartu, video sa pozastaví.</strong></div>
+        <div id="rules-text"></div>
       </div>
       <div id="player-box" class="player-box">
         <div class="player-frame">
@@ -73,7 +75,9 @@
         </div>
         <div class="controls">
           <button id="play" class="btn primary">▶ Prehrať</button>
-          <div class="bar" aria-hidden="true">
+          <button id="back10" class="btn ghost" hidden title="10 sekúnd dozadu">⟲ 10 s</button>
+          <button id="fwd30" class="btn ghost" hidden title="30 sekúnd dopredu">30 s ⟳</button>
+          <div class="bar" id="bar" aria-hidden="true">
             <div class="bar-watched" id="bar-watched"></div>
             <div class="bar-current" id="bar-current"></div>
           </div>

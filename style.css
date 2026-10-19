@@ -115,6 +115,8 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
 .steps li.done .icon { background: var(--ok); border-color: var(--ok); color: #fff; }
 .steps li.current { color: var(--text); font-weight: 600; }
 .steps li.current .icon { border-color: var(--primary); color: var(--primary); }
+.steps .grow { flex: 1; }
+.steps li .btn.small { flex: none; padding: 4px 12px; font-size: 14px; color: var(--primary); border-color: var(--primary); }
 .steps .sub { display: block; font-weight: 400; font-size: 14px; color: var(--muted); }
 
 /* Pravidlá pozerania */
@@ -143,6 +145,18 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
   font-size: 20px;
 }
 
+.rules.review { border-color: var(--primary); background: #e8f0fe; color: #123f8c; }
+.rules.review .rules-icon { background: var(--primary); }
+
+/* Návod */
+.howto { margin: 12px 0 0; border: 1px solid var(--line); border-radius: var(--radius); background: #f8f9fb; }
+.howto summary { cursor: pointer; padding: 12px 16px; font-weight: 600; color: var(--primary); }
+.howto[open] summary { border-bottom: 1px solid var(--line); }
+#howto-body { padding: 4px 20px 12px; }
+#howto-body h3 { font-size: 16px; margin: 14px 0 4px; }
+#howto-body ul { margin: 0; padding-left: 20px; }
+#howto-body li { margin: 4px 0; }
+
 /* Prehrávač */
 .player-box { background: #000; border-radius: var(--radius); overflow: hidden; }
 .player-frame { position: relative; aspect-ratio: 16 / 9; }
@@ -152,6 +166,7 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
 .controls .btn.ghost { color: #fff; border-color: #444; }
 .bar { position: relative; flex: 1; min-width: 120px; height: 8px; background: #3a3f4a; border-radius: 4px; overflow: hidden; }
 .bar-watched { position: absolute; inset: 0 auto 0 0; background: #6b7280; width: 0; }
+.bar.seekable { cursor: pointer; height: 12px; }
 .bar-current { position: absolute; inset: 0 auto 0 0; background: #4f8cff; width: 0; }
 .time { font-variant-numeric: tabular-nums; font-size: 14px; }
 #volume { width: 90px; }

@@ -222,6 +222,7 @@ function state_(user) {
     course: CONFIG.COURSE_NAME,
     courseHours: CONFIG.COURSE_HOURS,
     passPercent: CONFIG.PASS_PERCENT,
+    watchPercent: CONFIG.WATCH_PERCENT,
     hoursLimit: CONFIG.HOURS_LIMIT,
     deadline: deadline_(user),
     now: Date.now(),

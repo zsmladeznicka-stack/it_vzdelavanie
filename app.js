@@ -129,6 +129,7 @@
   function setState(r) {
     state = {
       user: r.user, school: r.school, course: r.course, courseHours: r.courseHours, passPercent: r.passPercent,
+      watchPercent: r.watchPercent,
       hoursLimit: r.hoursLimit, deadline: r.deadline, clockOffset: r.now - Date.now(),
       videos: r.videos, certificate: r.certificate,
     };
@@ -209,8 +210,48 @@
     return state.videos.findIndex((v) => !v.quizPassed); // -1 = všetko splnené
   }
 
+  function renderHowto() {
+    const n = state.videos.length;
+    const total = state.videos.reduce((s, v) => s + v.duration, 0);
+    const h = Math.floor(total / 3600), m = Math.round(total / 60) % 60;
+    const watch = state.watchPercent || 98;
+    $('#howto-body').innerHTML = `
+      <h3>Priebeh vzdelávania</h3>
+      <ul>
+        <li>Vzdelávanie tvorí <strong>${n} videí</strong> (spolu približne <strong>${h} h ${m} min</strong>). Po každom videu nasleduje krátky <strong>test</strong>.</li>
+        <li>Postupujete v poradí <strong>video → test → ďalšie video</strong>. Ďalší krok sa odomkne až po splnení predchádzajúceho.</li>
+        <li>Po splnení posledného testu získate <strong>osvedčenie</strong>, ktoré si môžete stiahnuť ako PDF alebo vytlačiť.</li>
+      </ul>
+      <h3>Termín</h3>
+      <ul>
+        <li>Celé vzdelávanie je potrebné dokončiť do <strong>${state.hoursLimit} hodín od prvého prihlásenia</strong>. Po uplynutí termínu už nie je možné pokračovať.</li>
+        <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a neskôr pokračovať tam, kde ste skončili.</li>
+        <li>Odporúčame vyhradiť si dostatok času, ideálne v jednom alebo dvoch blokoch.</li>
+      </ul>
+      <h3>Pozeranie videa</h3>
+      <ul>
+        <li>Video je potrebné pozrieť <strong>takmer celé (aspoň ${watch} %)</strong>. Až potom sa odomkne test.</li>
+        <li>Pri prvom pozeraní video <strong>nie je možné pretáčať dopredu ani zrýchliť</strong>.</li>
+        <li>Ak prepnete na iné okno alebo kartu, alebo okno minimalizujete, <strong>video sa pozastaví</strong>. Pokračujete tlačidlom <em>Prehrať</em>.</li>
+        <li>Po dopozeraní si video môžete kedykoľvek <strong>pozrieť znova</strong> (tlačidlo <em>Pozrieť znova</em> v zozname nižšie). Pri opakovanom pozeraní ho môžete voľne pretáčať a váš splnený priebeh sa tým nezmení.</li>
+      </ul>
+      <h3>Test</h3>
+      <ul>
+        <li>Test nemá časový limit. Na splnenie je potrebných aspoň <strong>${state.passPercent} %</strong> správnych odpovedí.</li>
+        <li>Ak test nesplníte, môžete ho <strong>opakovať</strong> – aj po opätovnom pozretí videa.</li>
+      </ul>
+      <h3>Odporúčania</h3>
+      <ul>
+        <li>Používajte počítač so stabilným internetovým pripojením a reproduktormi alebo slúchadlami.</li>
+        <li>Aplikáciu majte otvorenú iba v jednej karte prehliadača.</li>
+      </ul>`;
+    // pri prvej návšteve je návod rozbalený, neskôr zbalený
+    $('#howto').open = !state.videos.some((v) => v.watched > 0);
+  }
+
   function renderHome() {
     showError('');
+    renderHowto();
     const cur = currentIndex();
     $('#hello-name').textContent = state.user.name;
     const icon = (cls, n) => `<span class="icon">${cls === 'done' ? '✓' : n}</span>`;
@@ -219,8 +260,10 @@
     state.videos.forEach((v, i) => {
       const vCls = v.videoDone ? 'done' : i === cur ? 'current' : '';
       const progress = !v.videoDone && v.watched > 0 ? ` · pozreté ${fmt(v.watched)}` : '';
-      html += `<li class="${vCls}">${icon(vCls, n++)}<span>Video ${i + 1}: ${esc(v.title)}
-        <span class="sub">${fmt(v.duration)}${progress}</span></span></li>`;
+      const again = v.videoDone && !isExpired()
+        ? `<button class="btn small" data-review="${i}">▶ Pozrieť znova</button>` : '';
+      html += `<li class="${vCls}">${icon(vCls, n++)}<span class="grow">Video ${i + 1}: ${esc(v.title)}
+        <span class="sub">${fmt(v.duration)}${progress}</span></span>${again}</li>`;
       const qCls = v.quizPassed ? 'done' : i === cur && v.videoDone ? 'current' : '';
       const qSub = v.quizPassed ? `splnený (${v.best} %)` : v.tries ? `pokusy: ${v.tries}, najlepšie ${v.best} %` : `potrebných ${state.passPercent} %`;
       html += `<li class="${qCls}">${icon(qCls, n++)}<span>Test k videu ${i + 1}<span class="sub">${qSub}</span></span></li>`;
@@ -264,6 +307,9 @@
   const ytApi = new Promise((resolve) => { window.onYouTubeIframeAPIReady = resolve; });
   let deadlineTimer = null;
   let player = null, tick = null, vIndex = -1, maxWatched = 0, lastBeatAt = 0, beatBusy = false, beatAgain = false;
+  // Opakované pozretie dopozeraného videa: voľné pretáčanie a nič sa neposiela na server,
+  // takže splnený priebeh sa nemôže zmeniť.
+  let review = false;
 
   function loadYouTube() {
     if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return;
@@ -284,16 +330,25 @@
     return s === YT_PLAYING || s === YT_BUFFERING;
   }
 
-  async function openVideo(i) {
+  async function openVideo(i, isReview) {
     loadYouTube();
     closePlayer();
     vIndex = i;
+    review = !!isReview;
     const v = state.videos[i];
-    maxWatched = v.watched;
-    $('#video-title').textContent = `Video ${i + 1}: ${v.title}`;
-    $('#to-quiz').hidden = !v.videoDone;
-    const demoNote = DEMO ? 'Ukážkový režim: video sa ráta ako dopozerané po 1 minúte. V ostrom režime treba pozrieť celé video. ' : '';
-    setNotice(demoNote + (v.watched > 0 && !v.videoDone ? `Pokračujete od ${fmt(v.watched)}.` : ''));
+    maxWatched = review ? v.duration : v.watched;
+    $('#video-title').textContent = `Video ${i + 1}: ${v.title}` + (review ? ' (opakované pozretie)' : '');
+    $('#to-quiz').hidden = !v.videoDone || v.quizPassed;
+    $('#rules').classList.toggle('review', review);
+    $('#rules-text').innerHTML = review
+      ? '<strong>Opakované pozretie: video môžete voľne pretáčať</strong> – kliknutím na lištu alebo tlačidlami.<br>'
+        + 'Váš splnený priebeh sa tým nezmení, video nemusíte dopozerať.'
+      : '<strong>Video nie je možné pretáčať dopredu ani zrýchliť.</strong><br>'
+        + '<strong>Ak prepnete na iné okno alebo kartu, video sa pozastaví.</strong>';
+    $('#back10').hidden = $('#fwd30').hidden = !review;
+    $('#bar').classList.toggle('seekable', review);
+    const demoNote = DEMO && !review ? 'Ukážkový režim: video sa ráta ako dopozerané po 1 minúte. V ostrom režime treba pozrieť celé video. ' : '';
+    setNotice(demoNote + (!review && v.watched > 0 && !v.videoDone ? `Pokračujete od ${fmt(v.watched)}.` : ''));
     updateBar(maxWatched);
     show('video');
     clearInterval(deadlineTimer);
@@ -307,7 +362,7 @@
       height: '100%',
       playerVars: {
         controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, iv_load_policy: 3,
-        playsinline: 1, start: Math.floor(Math.max(0, maxWatched - 3)),
+        playsinline: 1, start: review ? 0 : Math.floor(Math.max(0, maxWatched - 3)),
       },
       events: {
         onReady: () => {
@@ -339,6 +394,10 @@
     if (!player || !player.getCurrentTime) return;
     if (player.getPlaybackRate && player.getPlaybackRate() !== 1) player.setPlaybackRate(1);
     const t = player.getCurrentTime();
+    if (review) {
+      updateBar(t);
+      return;
+    }
     if (t > maxWatched + 2) {
       // pokus o posun dopredu – vrátiť na najďalšie pozreté miesto
       player.seekTo(maxWatched, true);
@@ -368,6 +427,7 @@
   }
 
   async function heartbeat() {
+    if (review) return; // opakované pozretie nemení priebeh
     if (beatBusy) { beatAgain = true; return; }
     beatBusy = true;
     lastBeatAt = Date.now();
@@ -394,6 +454,19 @@
       beatBusy = false;
       if (beatAgain) { beatAgain = false; heartbeat(); }
     }
+  }
+
+  function seekBy(sec) {
+    if (!review || !player || !player.getCurrentTime) return;
+    const dur = player.getDuration() || state.videos[vIndex].duration;
+    player.seekTo(Math.min(Math.max(0, player.getCurrentTime() + sec), dur - 1), true);
+  }
+
+  function seekToBar(e) {
+    if (!review || !player || !player.getDuration) return;
+    const rect = $('#bar').getBoundingClientRect();
+    const frac = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width));
+    player.seekTo(frac * player.getDuration(), true);
   }
 
   function togglePlay() {
@@ -538,6 +611,13 @@
   $('#cert-print').onclick = () => window.print();
   $('#cert-pdf').onclick = downloadPdf;
   $('#course-name').addEventListener('click', onTitleClick);
+  $('#back10').onclick = () => seekBy(-10);
+  $('#fwd30').onclick = () => seekBy(30);
+  $('#bar').addEventListener('click', seekToBar);
+  $('#steps').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-review]');
+    if (b) openVideo(Number(b.dataset.review), true);
+  });
   $('#god-skip').onclick = () => godAction('godSkipVideo');
   $('#god-pass').onclick = () => godAction('godPassQuiz');
   $('#god-reset').onclick = () => godAction('godReset');
@@ -548,7 +628,7 @@
   window.addEventListener('blur', pauseBecauseLeft);
 
   window.addEventListener('pagehide', () => {
-    if (!player || DEMO || vIndex < 0) return;
+    if (!player || DEMO || review || vIndex < 0) return;
     navigator.sendBeacon(CFG.API_URL, JSON.stringify({ action: 'heartbeat', session: session, video: vIndex, position: Math.floor(maxWatched) }));
   });
 
