@@ -13,7 +13,13 @@ window.DemoApi = (() => {
   const QUESTIONS = VIDEOS.map((v, i) => [
     { text: `Ukážková otázka 1 k videu ${i + 1}: ktorá odpoveď je správna?`, options: ['Táto', 'Nie táto', 'Ani táto'], correct: 0 },
     { text: `Ukážková otázka 2 k videu ${i + 1}: koľko je 2 + 2?`, options: ['3', '4', '5', '22'], correct: 1 },
+    { text: `Ukážková doplňovačka k videu ${i + 1}: Hlavné mesto Slovenska je …`, type: 'text', key: 'Bratislava' },
   ]);
+  const norm = (s) => String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[.,!?;:"'„“()\-]/g, '').replace(/\s+/g, ' ').trim();
+  const isCorrect = (q, a) => (q.type === 'text'
+    ? q.key.split(';').map(norm).includes(norm(a == null ? '' : a))
+    : a === q.correct);
   const KEY = 'kurz-demo-v2';
   let memory = null;
 
@@ -63,12 +69,12 @@ window.DemoApi = (() => {
     quiz(db, d) {
       const p = unlocked(db, d.video);
       if (!p.videoDone) throw new Error('Najprv dopozerajte video.');
-      return { questions: QUESTIONS[d.video].map(q => ({ text: q.text, options: q.options })) };
+      return { questions: QUESTIONS[d.video].map(q => ({ text: q.text, type: q.type || 'choice', options: q.options || [] })) };
     },
     submit(db, d) {
       const p = unlocked(db, d.video);
       const qs = QUESTIONS[d.video];
-      const correct = qs.filter((q, k) => d.answers[k] === q.correct).length;
+      const correct = qs.filter((q, k) => isCorrect(q, d.answers[k])).length;
       const score = Math.round(correct / qs.length * 100);
       const passed = score >= 80;
       p.tries++;
@@ -85,7 +91,7 @@ window.DemoApi = (() => {
       Object.assign(db.progress[d.video], { watched: VIDEOS[d.video].duration, videoDone: true, quizPassed: true, best: 100 });
       return state(db);
     },
-    godAnswers: (db, d) => ({ correct: QUESTIONS[d.video].map(q => q.correct) }),
+    godAnswers: (db, d) => ({ correct: QUESTIONS[d.video].map(q => (q.type === 'text' ? q.key : q.correct)) }),
     godReset(db) {
       db.progress = VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 }));
       db.cert = null;

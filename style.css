@@ -179,6 +179,8 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
 .question { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; margin: 0 0 12px; }
 .question legend { font-weight: 600; padding: 0; float: left; width: 100%; margin-bottom: 8px; }
 .question label { font-weight: 400; display: flex; gap: 10px; align-items: flex-start; margin: 6px 0; cursor: pointer; clear: both; }
+.question input.fill { width: 100%; max-width: 360px; padding: 8px 10px; font: inherit; border: 1px solid var(--line); border-radius: 8px; margin: 4px 0; clear: both; display: block; }
+.god-hint { color: var(--ok); font-weight: 600; font-size: 14px; }
 .question input { display: inline-block; width: auto; flex: none; margin: 5px 0 0; padding: 0; }
 .question label span { flex: 1; }
 

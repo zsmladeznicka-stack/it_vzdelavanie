@@ -183,6 +183,11 @@
   function markCorrectAnswers(i) {
     api('godAnswers', { video: i }).then((r) => {
       r.correct.forEach((c, k) => {
+        if (typeof c === 'string') {
+          const field = document.querySelector(`input[name="q${k}"]`);
+          if (field) field.insertAdjacentHTML('afterend', `<div class="god-hint">✓ správne: ${esc(c)}</div>`);
+          return;
+        }
         const input = document.querySelector(`input[name="q${k}"][value="${c}"]`);
         if (input) input.closest('label').classList.add('god-correct');
       });
@@ -499,7 +504,9 @@
     $('#quiz-form').innerHTML = r.questions.map((q, k) => `
       <fieldset class="question">
         <legend>${k + 1}. ${esc(q.text)}</legend>
-        ${q.options.map((o, j) => `<label><input type="radio" name="q${k}" value="${j}"> <span>${esc(o)}</span></label>`).join('')}
+        ${q.type === 'text'
+          ? `<input type="text" class="fill" name="q${k}" autocomplete="off" spellcheck="false" placeholder="Doplňte jedno slovo">`
+          : q.options.map((o, j) => `<label><input type="radio" name="q${k}" value="${j}"> <span>${esc(o)}</span></label>`).join('')}
       </fieldset>`).join('');
     $('#quiz-submit').disabled = false;
     show('quiz');
@@ -509,10 +516,11 @@
   async function submitQuiz() {
     if (!quiz || $('#quiz-submit').disabled) return;
     const answers = quiz.questions.map((q, k) => {
+      if (q.type === 'text') return document.querySelector(`input[name="q${k}"]`).value.trim();
       const c = document.querySelector(`input[name="q${k}"]:checked`);
       return c ? Number(c.value) : -1;
     });
-    if (answers.includes(-1) && !confirm('Niektoré otázky nemáte zodpovedané. Naozaj chcete test odovzdať?')) return;
+    if (answers.some((a) => a === -1 || a === '') && !confirm('Niektoré otázky nemáte zodpovedané. Naozaj chcete test odovzdať?')) return;
     $('#quiz-submit').disabled = true;
     const i = quiz.index;
     let r;
