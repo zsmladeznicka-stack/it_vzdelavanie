@@ -245,7 +245,8 @@
     maxWatched = v.watched;
     $('#video-title').textContent = `Video ${i + 1}: ${v.title}`;
     $('#to-quiz').hidden = !v.videoDone;
-    setNotice(v.watched > 0 && !v.videoDone ? `Pokračujete od ${fmt(v.watched)}.` : '');
+    const demoNote = DEMO ? 'Ukážkový režim: video sa ráta ako dopozerané po 1 minúte. V ostrom režime treba pozrieť celé video. ' : '';
+    setNotice(demoNote + (v.watched > 0 && !v.videoDone ? `Pokračujete od ${fmt(v.watched)}.` : ''));
     updateBar(maxWatched);
     show('video');
     clearInterval(deadlineTimer);
