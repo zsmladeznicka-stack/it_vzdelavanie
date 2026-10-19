@@ -15,6 +15,16 @@
     </div>
   </header>
 
+  <div id="god-bar" class="god-bar" hidden>
+    <strong>GOD MODE</strong>
+    <span>testovací režim – vidí ho len administrátor</span>
+    <span class="spacer"></span>
+    <button class="btn" id="god-skip">Preskočiť video</button>
+    <button class="btn" id="god-pass">Splniť test</button>
+    <button class="btn" id="god-reset">Vynulovať môj priebeh</button>
+    <button class="btn" id="god-off">Vypnúť</button>
+  </div>
+
   <div id="error" class="banner error" hidden></div>
 
   <main>
@@ -41,8 +51,8 @@
         <h1>Dobrý deň, <span id="hello-name"></span></h1>
         <p class="muted">Videá a testy sa odomykajú postupne. Video treba dopozerať celé – nedá sa pretáčať a pri odchode z okna sa pozastaví. Priebeh sa ukladá, takže môžete prestať a pokračovať neskôr – najneskôr však do termínu nižšie.</p>
         <div id="deadline" class="banner warn" hidden></div>
-        <ol id="steps" class="steps"></ol>
         <button id="next-action" class="btn primary big"></button>
+        <ol id="steps" class="steps"></ol>
       </div>
     </section>
 

@@ -10,6 +10,7 @@
 
   let session = store('session');
   let state = null;
+  let godMode = store('god') === '1';
 
   // ---------- Pomocné ----------
 
@@ -118,6 +119,7 @@
     session = null;
     state = null;
     store('session', null);
+    setGod(false);
     if (!DEMO && window.google) google.accounts.id.disableAutoSelect();
     $('#user-box').hidden = true;
     $('#login-msg').textContent = msg || '';
@@ -134,6 +136,56 @@
     document.title = state.course;
     $('#user-name').textContent = state.user.name;
     $('#user-box').hidden = false;
+    $('#god-bar').hidden = !godMode;
+  }
+
+  // ---------- Testovací režim (god mode) ----------
+  // Zapína sa 5 kliknutiami na názov kurzu v hlavičke do 3 sekúnd.
+  // Server ho povolí len účtom uvedeným v CONFIG.ADMINS (Code.gs).
+
+  let godClicks = [];
+
+  function setGod(on) {
+    godMode = on;
+    store('god', on ? '1' : null);
+    $('#god-bar').hidden = !on || !state;
+  }
+
+  async function onTitleClick() {
+    if (!state || godMode) return;
+    const now = Date.now();
+    godClicks = godClicks.filter((t) => now - t < 3000).concat(now);
+    if (godClicks.length < 5) return;
+    godClicks = [];
+    try {
+      await api('godmode');
+      setGod(true);
+    } catch (err) { /* nie je administrátor – nič nezobrazujeme */ }
+  }
+
+  async function godAction(action) {
+    const i = currentIndex();
+    if (i === -1 && action !== 'godReset') {
+      showError('Všetky videá a testy sú už splnené.');
+      return;
+    }
+    if (action === 'godReset' && !confirm('Naozaj vymazať váš priebeh, termín aj osvedčenie a začať odznova?')) return;
+    closePlayer();
+    try {
+      setState(await api(action, { video: i }));
+      renderHome();
+    } catch (err) {
+      showError(err.message);
+    }
+  }
+
+  function markCorrectAnswers(i) {
+    api('godAnswers', { video: i }).then((r) => {
+      r.correct.forEach((c, k) => {
+        const input = document.querySelector(`input[name="q${k}"][value="${c}"]`);
+        if (input) input.closest('label').classList.add('god-correct');
+      });
+    }).catch(() => {});
   }
 
   // ---------- Prehľad ----------
@@ -380,6 +432,7 @@
       </fieldset>`).join('');
     $('#quiz-submit').disabled = false;
     show('quiz');
+    if (godMode) markCorrectAnswers(i);
   }
 
   async function submitQuiz() {
@@ -484,6 +537,11 @@
   $('#cert-back').onclick = renderHome;
   $('#cert-print').onclick = () => window.print();
   $('#cert-pdf').onclick = downloadPdf;
+  $('#course-name').addEventListener('click', onTitleClick);
+  $('#god-skip').onclick = () => godAction('godSkipVideo');
+  $('#god-pass').onclick = () => godAction('godPassQuiz');
+  $('#god-reset').onclick = () => godAction('godReset');
+  $('#god-off').onclick = () => setGod(false);
 
   // Video sa zastaví pri prepnutí karty, minimalizácii alebo prechode do iného okna.
   document.addEventListener('visibilitychange', () => { if (document.hidden) pauseBecauseLeft(); });

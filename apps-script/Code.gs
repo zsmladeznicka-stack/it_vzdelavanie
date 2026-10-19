@@ -10,6 +10,8 @@ const CONFIG = {
   COURSE_NAME: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
   COURSE_HOURS: 10, // rozsah vzdelávania uvedený na osvedčení
   CERT_PREFIX: 'OSV',
+  // Účty, ktoré si môžu zapnúť testovací režim (god mode)
+  ADMINS: ['fazekas.csaba@koharysuli.sk'],
   PASS_PERCENT: 80,
   WATCH_PERCENT: 98, // koľko percent videa treba pozrieť, aby sa odomkol test
   HOURS_LIMIT: 24, // celý kurz treba dokončiť do tohto počtu hodín od prvého prihlásenia
@@ -74,6 +76,10 @@ function handle_(req) {
   if (!user) return { error: 'SESSION_EXPIRED' };
   if (req.action === 'state') return state_(user);
   if (req.action === 'certificate') return withLock_(() => certificate_(user)); // splnený kurz platí aj po termíne
+  if (String(req.action).indexOf('god') === 0) {
+    if (!isAdmin_(user)) return { error: 'Nemáte oprávnenie.' };
+    return withLock_(() => god_(user, req));
+  }
   if (Date.now() > deadline_(user)) return { error: 'DEADLINE' };
   switch (req.action) {
     case 'heartbeat': return withLock_(() => heartbeat_(user, Number(req.video), Number(req.position)));
@@ -289,6 +295,58 @@ function submitQuiz_(user, i, answers) {
   return { score: score, correct: correct, total: qs.length, passed: passed };
 }
 
+// ---------- Testovací režim (god mode) ----------
+
+function isAdmin_(user) {
+  return CONFIG.ADMINS.some(e => String(e).toLowerCase() === user.email);
+}
+
+function god_(user, req) {
+  const vids = videos_();
+  const map = progress_(user);
+  const i = Number(req.video);
+  switch (req.action) {
+    case 'godmode':
+      return { ok: true };
+    case 'godSkipVideo': {
+      if (!vids[i]) throw new Error('Neznáme video.');
+      const rec = ensureRow_(user, vids[i], map);
+      rec.v[P.WATCHED] = vids[i].duration;
+      rec.v[P.DONE] = true;
+      save_(rec);
+      return state_(user);
+    }
+    case 'godPassQuiz': {
+      if (!vids[i]) throw new Error('Neznáme video.');
+      const rec = ensureRow_(user, vids[i], map);
+      rec.v[P.WATCHED] = vids[i].duration;
+      rec.v[P.DONE] = true;
+      rec.v[P.PASSED] = true;
+      rec.v[P.BEST] = 100;
+      rec.v[P.PASSED_AT] = new Date();
+      save_(rec);
+      return state_(user);
+    }
+    case 'godAnswers':
+      if (!vids[i]) throw new Error('Neznáme video.');
+      return { correct: questions_(vids[i].order).map(q => q.correct) };
+    case 'godReset':
+      deleteUserRows_(SHEET.PROGRESS, 0, user.email);
+      deleteUserRows_(SHEET.USERS, 0, user.email);
+      deleteUserRows_(SHEET.CERTS, 1, user.email);
+      return state_(user); // vytvorí nový 24-hodinový termín
+  }
+  return { error: 'Neznáma akcia.' };
+}
+
+function deleteUserRows_(name, col, email) {
+  const sh = sheet_(name);
+  const data = sh.getDataRange().getValues();
+  for (let r = data.length - 1; r >= 1; r--) {
+    if (String(data[r][col]).toLowerCase() === email) sh.deleteRow(r + 1);
+  }
+}
+
 // ---------- Osvedčenie ----------
 
 function findCert_(email) {
@@ -306,7 +364,8 @@ function certificate_(user) {
   if (!cert) {
     const sh = sheet_(SHEET.CERTS);
     const now = new Date();
-    const id = CONFIG.CERT_PREFIX + '-' + now.getFullYear() + '-' + String(sh.getLastRow()).padStart(4, '0');
+    const last = rows_(SHEET.CERTS).reduce((m, r) => Math.max(m, Number(String(r[0]).split('-').pop()) || 0), 0);
+    const id = CONFIG.CERT_PREFIX + '-' + now.getFullYear() + '-' + String(last + 1).padStart(4, '0');
     sh.appendRow([id, user.email, user.name, now]);
     cert = { id: id, name: user.name, date: formatDate_(now) };
   }

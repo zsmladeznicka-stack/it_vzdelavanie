@@ -75,6 +75,22 @@ window.DemoApi = (() => {
       if (passed) p.quizPassed = true;
       return { score, correct, total: qs.length, passed };
     },
+    godmode: () => ({ ok: true }),
+    godSkipVideo(db, d) {
+      Object.assign(db.progress[d.video], { watched: VIDEOS[d.video].duration, videoDone: true });
+      return state(db);
+    },
+    godPassQuiz(db, d) {
+      Object.assign(db.progress[d.video], { watched: VIDEOS[d.video].duration, videoDone: true, quizPassed: true, best: 100 });
+      return state(db);
+    },
+    godAnswers: (db, d) => ({ correct: QUESTIONS[d.video].map(q => q.correct) }),
+    godReset(db) {
+      db.progress = VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 }));
+      db.cert = null;
+      db.deadline = Date.now() + 24 * 3600 * 1000;
+      return state(db);
+    },
     certificate(db) {
       if (!db.progress.every(p => p.quizPassed)) throw new Error('Kurz ešte nie je dokončený.');
       if (!db.cert) db.cert = { id: 'OSV-DEMO-0001', name: db.user.name, date: new Date().toLocaleDateString('sk-SK') };
