@@ -53,7 +53,7 @@ window.DemoApi = (() => {
       const p = unlocked(db, d.video);
       const dur = VIDEOS[d.video].duration;
       p.watched = Math.max(p.watched, Math.min(d.position, dur));
-      if (p.watched >= dur) p.videoDone = true;
+      if (p.watched >= dur * 0.98) p.videoDone = true;
       return { watched: p.watched, videoDone: p.videoDone };
     },
     quiz(db, d) {

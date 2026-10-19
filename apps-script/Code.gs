@@ -10,6 +10,7 @@ const CONFIG = {
   COURSE_NAME: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
   CERT_PREFIX: 'OSV',
   PASS_PERCENT: 80,
+  WATCH_PERCENT: 98, // koľko percent videa treba pozrieť, aby sa odomkol test
   HOURS_LIMIT: 24, // celý kurz treba dokončiť do tohto počtu hodín od prvého prihlásenia
 };
 
@@ -35,13 +36,14 @@ function setup() {
     if (rows && rows.length) sh.getRange(2, 1, rows.length, rows[0].length).setValues(rows);
   };
   make(SHEET.VIDEOS, ['Poradie', 'Názov', 'YouTube ID', 'Dĺžka (sekundy)'], [
-    [1, 'Video 1', 'aqz-KE-bpKQ', 634],
-    [2, 'Video 2', 'aqz-KE-bpKQ', 634],
-    [3, 'Video 3', 'aqz-KE-bpKQ', 634],
-    [4, 'Video 4', 'aqz-KE-bpKQ', 634],
+    [1, 'Vitajte v spleti sociálnych sietí', 'NpNKSyQhZGU', 4440],
+    [2, 'Úvod do informačnej bezpečnosti', '1W2Una0nT1U', 3500],
+    [3, 'Nástroje Canvy využívajúce umelú inteligenciu', 'OAN3jZFkdfk', 4457],
+    [4, 'Využitie QR kódov a rozšírenej reality vo vyučovaní', 'Ye0Ed6noRGI', 3510],
+    [5, 'Kolaborácia žiakov na digitálnych boardoch počas a mimo vyučovania', 'GdD_emxfcWM', 3576],
   ]);
   const q = [];
-  for (let v = 1; v <= 4; v++) {
+  for (let v = 1; v <= 5; v++) {
     q.push([v, 'Ukážková otázka 1 k videu ' + v, 'Správna odpoveď', 'Nesprávna', 'Nesprávna', 'Nesprávna', 'A']);
     q.push([v, 'Ukážková otázka 2 k videu ' + v, 'Nesprávna', 'Správna odpoveď', 'Nesprávna', '', 'B']);
   }
@@ -240,7 +242,7 @@ function heartbeat_(user, i, position) {
   const pos = Math.max(0, Math.min(position || 0, allowed, video.duration));
   if (pos > watched) rec.v[P.WATCHED] = Math.round(pos);
   rec.v[P.BEAT] = new Date(now);
-  if (Number(rec.v[P.WATCHED]) >= video.duration - 15) rec.v[P.DONE] = true;
+  if (Number(rec.v[P.WATCHED]) >= video.duration * CONFIG.WATCH_PERCENT / 100) rec.v[P.DONE] = true;
   save_(rec);
   return { watched: Number(rec.v[P.WATCHED]), videoDone: rec.v[P.DONE] === true };
 }
