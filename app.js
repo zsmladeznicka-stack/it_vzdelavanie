@@ -214,7 +214,6 @@
     const n = state.videos.length;
     const total = state.videos.reduce((s, v) => s + v.duration, 0);
     const h = Math.floor(total / 3600), m = Math.round(total / 60) % 60;
-    const watch = state.watchPercent || 98;
     $('#howto-body').innerHTML = `
       <h3>Priebeh vzdelávania</h3>
       <ul>
@@ -222,15 +221,14 @@
         <li>Postupujete v poradí <strong>video → test → ďalšie video</strong>. Ďalší krok sa odomkne až po splnení predchádzajúceho.</li>
         <li>Po splnení posledného testu získate <strong>osvedčenie</strong>, ktoré si môžete stiahnuť ako PDF alebo vytlačiť.</li>
       </ul>
-      <h3>Termín</h3>
+      <h3>Ukladanie priebehu</h3>
       <ul>
-        <li>Celé vzdelávanie je potrebné dokončiť do <strong>${state.hoursLimit} hodín od prvého prihlásenia</strong>. Po uplynutí termínu už nie je možné pokračovať.</li>
         <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a neskôr pokračovať tam, kde ste skončili.</li>
         <li>Odporúčame vyhradiť si dostatok času, ideálne v jednom alebo dvoch blokoch.</li>
       </ul>
       <h3>Pozeranie videa</h3>
       <ul>
-        <li>Video je potrebné pozrieť <strong>takmer celé (aspoň ${watch} %)</strong>. Až potom sa odomkne test.</li>
+        <li>Video je potrebné <strong>pozrieť celé</strong>. Až potom sa odomkne test.</li>
         <li>Pri prvom pozeraní video <strong>nie je možné pretáčať dopredu ani zrýchliť</strong>.</li>
         <li>Ak prepnete na iné okno alebo kartu, alebo okno minimalizujete, <strong>video sa pozastaví</strong>. Pokračujete tlačidlom <em>Prehrať</em>.</li>
         <li>Po dopozeraní si video môžete kedykoľvek <strong>pozrieť znova</strong> (tlačidlo <em>Pozrieť znova</em> v zozname nižšie). Pri opakovanom pozeraní ho môžete voľne pretáčať a váš splnený priebeh sa tým nezmení.</li>
@@ -238,7 +236,7 @@
       <h3>Test</h3>
       <ul>
         <li>Test nemá časový limit. Na splnenie je potrebných aspoň <strong>${state.passPercent} %</strong> správnych odpovedí.</li>
-        <li>Ak test nesplníte, môžete ho <strong>opakovať</strong> – aj po opätovnom pozretí videa.</li>
+        <li>Ak test nesplníte, môžete ho <strong>opakovať</strong>.</li>
       </ul>
       <h3>Odporúčania</h3>
       <ul>
