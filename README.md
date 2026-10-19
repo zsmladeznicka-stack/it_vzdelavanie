@@ -51,7 +51,7 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
 2. **APIs & Services → OAuth consent screen**: typ používateľa **Internal**. Aplikáciu potom uvidia len účty @koharysuli.sk. Vyplňte názov a kontaktný e-mail.
 3. **APIs & Services → Credentials → Create credentials → OAuth client ID**:
    - Application type: **Web application**
-   - Authorized JavaScript origins: `https://VAS-GITHUB-UCET.github.io`
+   - Authorized JavaScript origins: `https://zsmladeznicka-stack.github.io`
 4. Skopírujte **Client ID** (končí na `.apps.googleusercontent.com`) a vložte ho:
    - do `CONFIG.CLIENT_ID` v Apps Scripte,
    - do `GOOGLE_CLIENT_ID` v súbore `config.js`.
@@ -67,10 +67,10 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
 > Po každej zmene `Code.gs` treba ísť do **Nasadiť → Spravovať nasadenia → upraviť (ceruzka) → Verzia: Nová verzia**. URL zostane rovnaká. Zmeny v tabuľke (videá, otázky) sa prejavia hneď a nové nasadenie nepotrebujú.
 
 ### 5. Zverejnenie stránky na GitHub Pages
-1. Na https://github.com vytvorte nový repozitár, napr. `kurz-ucitelia`.
+1. Repozitár: https://github.com/zsmladeznicka-stack/it_vzdelavanie
 2. Nahrajte doň súbory projektu (**Add file → Upload files**).
 3. **Settings → Pages → Source: Deploy from a branch → main / (root) → Save**.
-4. O minútu bude stránka dostupná na `https://VAS-GITHUB-UCET.github.io/kurz-ucitelia/`.
+4. O minútu bude stránka dostupná na https://zsmladeznicka-stack.github.io/it_vzdelavanie/.
 
 Hotovo. Tento odkaz pošlete učiteľom.
 
