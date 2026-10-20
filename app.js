@@ -306,8 +306,10 @@
       dl.hidden = false;
     }
     if (!state.active && state.canStart && cur !== -1) {
-      dl.className = 'banner info';
-      dl.textContent = 'Vzdelávanie je pre učiteľov vypnuté (Nastavenia: 0). Ako administrátor ho môžete testovať.';
+      dl.className = 'banner admin';
+      dl.innerHTML = '<span class="admin-icon" aria-hidden="true">⏸</span><div><strong>Vzdelávanie je pre učiteľov VYPNUTÉ</strong>'
+        + '<br>V hárku Nastavenia je hodnota 0 – učitelia nemôžu spustiť videá ani testy. '
+        + 'Ako administrátor môžete aplikáciu testovať. Spustíte ju prepísaním hodnoty na 1.</div>';
       dl.hidden = false;
     }
     if (cur === -1) {
