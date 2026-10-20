@@ -272,7 +272,6 @@
       </ul>
       <h3>Odporúčania</h3>
       <ul>
-        <li>Používajte počítač so stabilným internetovým pripojením a reproduktormi alebo slúchadlami.</li>
         <li>Aplikáciu majte otvorenú iba v jednej karte prehliadača.</li>
       </ul>
       <h3>Osvedčenie</h3>
