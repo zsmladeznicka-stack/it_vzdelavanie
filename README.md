@@ -72,6 +72,11 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
 3. **Settings → Pages → Source: Deploy from a branch → main / (root) → Save**.
 4. O minútu bude stránka dostupná na https://zsmladeznicka-stack.github.io/it_vzdelavanie/.
 
+### Vlastná adresa: https://vzdelavanie.koharysuli.sk
+- **DNS (Websupport, hlavný účet školy):** záznam `CNAME`, názov `vzdelavanie`, cieľ `zsmladeznicka-stack.github.io`.
+- **GitHub:** Settings → Pages → Custom domain `vzdelavanie.koharysuli.sk`, zapnuté **Enforce HTTPS** (súbor `CNAME` v repozitári sa nesmie zmazať).
+- **Google Cloud Console:** v Authorized JavaScript origins musí byť `https://vzdelavanie.koharysuli.sk`.
+
 Hotovo. Tento odkaz pošlete učiteľom.
 
 ---
