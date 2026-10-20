@@ -594,6 +594,7 @@
     $('#cert-course').textContent = '„' + state.course + '“';
     $('#cert-text').textContent = `Vzdelávanie v rozsahu ${state.courseHours} vyučovacích hodín (1 vyučovacia hodina = 45 minút)`;
     $('#cert-date').textContent = c.date;
+    $('#cert-completed').textContent = c.completed || c.date;
     $('#cert-id').textContent = c.id;
     show('cert');
   }

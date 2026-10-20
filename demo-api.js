@@ -96,7 +96,13 @@ window.DemoApi = (() => {
     },
     certificate(db) {
       if (!db.progress.every(p => p.quizPassed)) throw new Error('Kurz ešte nie je dokončený.');
-      if (!db.cert) db.cert = { id: 'OSV-DEMO-0001', name: db.user.name, date: new Date().toLocaleDateString('sk-SK') };
+      if (!db.cert) {
+        const now = new Date();
+        db.cert = {
+          id: 'OSV-DEMO-0001', name: db.user.name, date: now.toLocaleDateString('sk-SK'),
+          completed: now.toLocaleDateString('sk-SK') + ' o ' + now.toLocaleTimeString('sk-SK', { hour: '2-digit', minute: '2-digit' }),
+        };
+      }
       return { certificate: db.cert };
     },
   };

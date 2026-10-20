@@ -52,7 +52,7 @@ function setup() {
   }
   make(SHEET.QUESTIONS, ['Video', 'Otázka', 'A', 'B', 'C', 'D', 'Správna (A–D)'], q);
   make(SHEET.PROGRESS, PROGRESS_HEADER);
-  make(SHEET.CERTS, ['Číslo', 'E-mail', 'Meno', 'Dátum vydania']);
+  make(SHEET.CERTS, ['Číslo', 'E-mail', 'Meno', 'Dátum vydania', 'Ukončené (posledný test)']);
   make(SHEET.USERS, ['E-mail', 'Meno', 'Prvé prihlásenie', 'Termín ukončenia']);
   make(SHEET.SETTINGS, ['Nastavenie', 'Hodnota'], [['Vzdelávanie aktívne', 1]]);
 }
@@ -235,7 +235,7 @@ function state_(user) {
     deadline: deadline_(user, courseOpen_(user)),
     now: Date.now(),
     videos: videos,
-    certificate: findCert_(user.email),
+    certificate: publicCert_(findCert_(user.email)),
   };
 }
 
@@ -380,9 +380,28 @@ function deleteUserRows_(name, col, email) {
 // ---------- Osvedčenie ----------
 
 function findCert_(email) {
-  const row = rows_(SHEET.CERTS).find(r => String(r[1]).toLowerCase() === email);
-  if (!row) return null;
-  return { id: String(row[0]), name: String(row[2]), date: formatDate_(row[3]) };
+  const rows = rows_(SHEET.CERTS);
+  const i = rows.findIndex(r => String(r[1]).toLowerCase() === email);
+  if (i === -1) return null;
+  const row = rows[i];
+  return {
+    id: String(row[0]), name: String(row[2]), date: formatDate_(row[3]),
+    completed: row[4] instanceof Date ? formatDateTime_(row[4]) : '',
+    row: i + 2,
+  };
+}
+
+function publicCert_(cert) {
+  if (cert) delete cert.row;
+  return cert;
+}
+
+/** Čas ukončenia vzdelávania = splnenie posledného testu. */
+function completedAt_(vids, map) {
+  return vids.reduce((m, v) => {
+    const t = map[v.order] && map[v.order].v[P.PASSED_AT];
+    return t instanceof Date && (!m || t > m) ? t : m;
+  }, null);
 }
 
 function certificate_(user) {
@@ -390,16 +409,26 @@ function certificate_(user) {
   const map = progress_(user);
   const done = vids.length && vids.every(v => map[v.order] && map[v.order].v[P.PASSED] === true);
   if (!done) throw new Error('Kurz ešte nie je dokončený.');
+  const completed = completedAt_(vids, map) || new Date();
   let cert = findCert_(user.email);
   if (!cert) {
     const sh = sheet_(SHEET.CERTS);
     const now = new Date();
     const last = rows_(SHEET.CERTS).reduce((m, r) => Math.max(m, Number(String(r[0]).split('-').pop()) || 0), 0);
     const id = CONFIG.CERT_PREFIX + '-' + now.getFullYear() + '-' + String(last + 1).padStart(4, '0');
-    sh.appendRow([id, user.email, user.name, now]);
-    cert = { id: id, name: user.name, date: formatDate_(now) };
+    sh.appendRow([id, user.email, user.name, now, completed]);
+    cert = { id: id, name: user.name, date: formatDate_(now), completed: formatDateTime_(completed) };
+  } else if (!cert.completed) {
+    // osvedčenie vydané pred zavedením času ukončenia – doplniť
+    sheet_(SHEET.CERTS).getRange(cert.row, 5).setValue(completed);
+    cert.completed = formatDateTime_(completed);
   }
+  delete cert.row;
   return { certificate: cert };
+}
+
+function formatDateTime_(d) {
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), "d. M. yyyy 'o' HH:mm");
 }
 
 function formatDate_(d) {
