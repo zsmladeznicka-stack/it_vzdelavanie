@@ -285,10 +285,10 @@
     if (cur === -1) {
       dl.hidden = true;
     } else if (!state.canStart) {
-      dl.className = 'banner info';
-      dl.innerHTML = '<strong>Vzdelávanie zatiaľ nie je spustené.</strong> Môžete si prečítať, ako funguje, '
-        + 'a pozrieť si zoznam videí. Videá a testy bude možné spustiť po zahájení vzdelávania. '
-        + `Čas na absolvovanie (${state.hoursLimit} hodín) sa začne počítať až od vášho prvého prihlásenia po spustení.`;
+      dl.className = 'banner admin notice';
+      dl.innerHTML = '<span class="admin-icon" aria-hidden="true">i</span><div><strong>Vzdelávanie zatiaľ nie je spustené</strong>'
+        + '<br>Môžete si prečítať, ako funguje, a pozrieť si zoznam videí. Videá a testy bude možné spustiť po zahájení vzdelávania. '
+        + `Čas na absolvovanie (${state.hoursLimit} hodín) sa začne počítať až od vášho prvého prihlásenia po spustení.</div>`;
       dl.hidden = false;
       btn.hidden = true;
     } else if (!state.deadline) {

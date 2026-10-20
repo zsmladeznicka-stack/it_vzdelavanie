@@ -89,6 +89,8 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
   font-size: 16px;
 }
 .banner.admin strong { font-size: 18px; }
+.banner.admin.notice { background: #e8f0fe; color: #123f8c; border-color: var(--primary); }
+.banner.admin.notice .admin-icon { background: var(--primary); font-weight: 700; font-family: Georgia, serif; }
 .admin-icon {
   flex: none;
   width: 36px; height: 36px;
