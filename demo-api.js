@@ -19,7 +19,7 @@ window.DemoApi = (() => {
 
   const load = () => {
     try { memory = JSON.parse(localStorage.getItem(KEY)) || memory; } catch (e) { /* bez úložiska */ }
-    return memory || { user: null, deadline: 0, progress: VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 })), cert: null };
+    return memory || { user: null, progress: VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 })), cert: null };
   };
   const save = (db) => {
     memory = db;
@@ -33,17 +33,18 @@ window.DemoApi = (() => {
     courseHours: 10,
     passPercent: 80,
     watchPercent: 98,
-    hoursLimit: 24,
     active: true,
     canStart: true,
-    deadline: db.deadline,
+    admin: true, // v ukážke sa čas konca nevynucuje
+    closeAt: new Date().setHours(17, 0, 0, 0),
+    closeLabel: '17:00',
+    estimateHours: 7,
     now: Date.now(),
     videos: VIDEOS.map((v, i) => Object.assign({}, v, db.progress[i])),
     certificate: db.cert,
   });
 
   const unlocked = (db, i) => {
-    if (Date.now() > db.deadline) throw new Error('DEADLINE');
     if (!VIDEOS[i]) throw new Error('Neznáme video.');
     for (let k = 0; k < i; k++) if (!db.progress[k].quizPassed) throw new Error('Najprv dokončite predchádzajúce video a test.');
     return db.progress[i];
@@ -52,7 +53,6 @@ window.DemoApi = (() => {
   const actions = {
     login(db, d) {
       db.user = { email: 'ucitel@koharysuli.sk', name: d.name || 'Ukážkový učiteľ' };
-      if (!db.deadline) db.deadline = Date.now() + 24 * 3600 * 1000;
       return Object.assign({ session: 'demo' }, state(db));
     },
     state: (db) => state(db),
@@ -91,7 +91,6 @@ window.DemoApi = (() => {
     godReset(db) {
       db.progress = VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 }));
       db.cert = null;
-      db.deadline = Date.now() + 24 * 3600 * 1000;
       return state(db);
     },
     certificate(db) {

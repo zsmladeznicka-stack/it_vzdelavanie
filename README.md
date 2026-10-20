@@ -6,7 +6,8 @@ Učiteľ sa prihlási školským Google účtom (@koharysuli.sk). Potom postupne
 - Pri prepnutí karty, minimalizácii alebo prechode do iného okna sa video pozastaví.
 - Ďalšie video sa odomkne až po splnení testu (aspoň 80 %). Neúspešný test sa dá opakovať.
 - Testy nemajú časový limit.
-- Celé vzdelávanie treba dokončiť do **24 hodín od prvého prihlásenia**. Priebeh sa ukladá, takže v rámci tohto času možno prestať a pokračovať. Po uplynutí termínu sa už pokračovať nedá.
+- Vzdelávanie prebieha v jeden deň, ktorý určí administrátor zapnutím v hárku **Nastavenia**. Pracovať sa dá do **17:00** (nastaviteľné). Kto otvorí aplikáciu neskôr, než je odhadovaný čas (7 h) pred koncom, uvidí upozornenie, koľko času mu zostáva. Priebeh sa vždy ukladá a po 17:00 sa nestratí.
+- Osvedčenie si možno stiahnuť kedykoľvek, aj po 17:00 a v iné dni.
 - Server zaznamenáva pozretý čas podľa reálne uplynutého času. Video sa preto nedá „dopozerať“ rýchlejšie, ani keď niekto obíde prehrávač.
 - Správne odpovede sú len v tabuľke, prehliadač ich nikdy nedostane.
 
@@ -41,8 +42,12 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
    - **Otazky**: číslo videa, otázka, možnosti A–D (C a D môžu byť prázdne), správna odpoveď (písmeno)
    - **Priebeh**: tu priebežne vidíte, kto koľko pozrel a ako dopadli testy
    - **Osvedcenia**: zoznam vydaných osvedčení s číslami
-   - **Ucastnici**: čas prvého prihlásenia a termín ukončenia každého učiteľa
-   - **Nastavenia**: `Vzdelávanie aktívne` = `1` (učitelia môžu začať) alebo `0` (učitelia vidia úvodnú stránku a návod, ale videá ani testy nespustia a 24-hodinové okno sa im nezačne počítať). Administrátori (`ADMINS`) môžu aplikáciu používať aj pri `0`. Zmena sa prejaví hneď.
+   - **Ucastnici**: čas prvého prihlásenia každého učiteľa (len evidencia)
+   - **Nastavenia**:
+     - `Vzdelávanie aktívne` = `1` (učitelia môžu pracovať) alebo `0` (učitelia vidia úvodnú stránku a návod, ale videá ani testy nespustia).
+     - `Koniec (čas)` = čas, do ktorého sa dá v daný deň pracovať, napr. `17:00`. Odovzdať rozpracovaný test možno ešte 10 minút po konci.
+     - `Odhadovaný čas (hodiny)` = koľko hodín celé vzdelávanie približne trvá (`7`); podľa toho sa zobrazuje upozornenie pri neskorom začiatku.
+     - Administrátori (`ADMINS`) môžu aplikáciu používať vždy, aj pri `0` a po čase konca. Zmeny sa prejavia hneď.
 6. Hárky **Videa** a **Otazky** prepíšte vlastnými údajmi. Ukážkové riadky zmažte.
 
 > Video sa ráta ako dopozerané, keď učiteľ pozrel aspoň **98 %** jeho dĺžky (nastavenie `WATCH_PERCENT` v `CONFIG`). Až potom sa zobrazí tlačidlo na test.
@@ -86,11 +91,11 @@ Hotovo. Tento odkaz pošlete učiteľom.
 
 **Dá sa test opakovať?** Áno, neobmedzene. Do tabuľky sa zapisuje počet pokusov aj najlepšie skóre.
 
-**Čo ak učiteľ zavrie prehliadač uprostred videa?** Pri ďalšom prihlásení pokračuje od miesta, kde skončil (s presnosťou na približne 20 sekúnd), ak ešte neuplynulo 24 hodín od prvého prihlásenia.
+**Čo ak učiteľ zavrie prehliadač uprostred videa?** Pri ďalšom prihlásení pokračuje od miesta, kde skončil (s presnosťou na približne 20 sekúnd).
 
-**Čo ak učiteľ nestihne termín?** Aplikácia mu oznámi, že vzdelávanie už nemožno dokončiť. Ak mu chcete dať nový termín, v hárku **Ucastnici** zmažte jeho riadok. Nových 24 hodín sa začne rátať od ďalšieho prihlásenia. Ak má začať úplne odznova, zmažte aj jeho riadky v hárku **Priebeh**.
+**Čo ak učiteľ nestihne všetko do 17:00?** Aplikácia mu oznámi, že dnešný čas skončil. Jeho priebeh (dokončené videá a testy) ostáva uložený. Keď vzdelávanie v iný deň znova zapnete (Nastavenia = 1), pokračuje tam, kde skončil.
 
-**Platí osvedčenie aj po termíne?** Áno. Kto stihol splniť všetky testy včas, osvedčenie si môže zobraziť a stiahnuť aj neskôr.
+**Dá sa osvedčenie stiahnuť neskôr?** Áno, kedykoľvek – aj po 17:00, v iné dni a aj pri vypnutom vzdelávaní.
 
 **Ako overím pravosť osvedčenia?** Číslo osvedčenia je uvedené v hárku **Osvedcenia** spolu s menom a dátumom.
 

@@ -89,6 +89,10 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
   font-size: 16px;
 }
 .banner.admin strong { font-size: 18px; }
+.banner.admin.warnbox { background: var(--warn-bg); color: #7a3f00; border-color: #d97706; }
+.banner.admin.warnbox .admin-icon { background: #d97706; font-weight: 800; }
+.banner.admin.closed { background: var(--err-bg); color: #7a1b12; border-color: var(--err); }
+.banner.admin.closed .admin-icon { background: var(--err); font-size: 14px; }
 .banner.admin.notice { background: #e8f0fe; color: #123f8c; border-color: var(--primary); }
 .banner.admin.notice .admin-icon { background: var(--primary); font-weight: 700; font-family: Georgia, serif; }
 .admin-icon {

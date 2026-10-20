@@ -14,7 +14,6 @@ const CONFIG = {
   ADMINS: ['fazekas.csaba@koharysuli.sk'],
   PASS_PERCENT: 80,
   WATCH_PERCENT: 98, // koľko percent videa treba pozrieť, aby sa odomkol test
-  HOURS_LIMIT: 24, // celý kurz treba dokončiť do tohto počtu hodín od prvého prihlásenia
 };
 
 const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici', SETTINGS: 'Nastavenia' };
@@ -25,6 +24,7 @@ const PROGRESS_HEADER = ['E-mail', 'Meno', 'Video', 'Pozreté (s)', 'Dĺžka (s)
   'Test spustený', 'Pokusy', 'Najlepšie skóre (%)', 'Test splnený', 'Splnené dňa'];
 
 const SESSION_SECONDS = 6 * 3600; // maximum CacheService
+const SUBMIT_GRACE_MS = 10 * 60 * 1000;
 
 /** Spustite raz ručne z editora – vytvorí hárky s ukážkovými údajmi. */
 function setup() {
@@ -53,8 +53,12 @@ function setup() {
   make(SHEET.QUESTIONS, ['Video', 'Otázka', 'A', 'B', 'C', 'D', 'Správna (A–D)'], q);
   make(SHEET.PROGRESS, PROGRESS_HEADER);
   make(SHEET.CERTS, ['Číslo', 'E-mail', 'Meno', 'Dátum vydania', 'Ukončené (posledný test)']);
-  make(SHEET.USERS, ['E-mail', 'Meno', 'Prvé prihlásenie', 'Termín ukončenia']);
-  make(SHEET.SETTINGS, ['Nastavenie', 'Hodnota'], [['Vzdelávanie aktívne', 1]]);
+  make(SHEET.USERS, ['E-mail', 'Meno', 'Prvé prihlásenie']);
+  make(SHEET.SETTINGS, ['Nastavenie', 'Hodnota'], [
+    ['Vzdelávanie aktívne', 1],
+    ['Koniec (čas)', '17:00'],
+    ['Odhadovaný čas (hodiny)', 7],
+  ]);
 }
 
 function doGet() {
@@ -82,7 +86,10 @@ function handle_(req) {
     return withLock_(() => god_(user, req));
   }
   if (!courseOpen_(user)) return { error: 'INACTIVE' };
-  if (Date.now() > deadline_(user)) return { error: 'DEADLINE' };
+  // po čase konca sa nedá pokračovať; rozpracovaný test možno odovzdať ešte chvíľu po konci
+  if (!isAdmin_(user) && Date.now() > closeAtToday_() + (req.action === 'submit' ? SUBMIT_GRACE_MS : 0)) {
+    return { error: 'CLOSED' };
+  }
   switch (req.action) {
     case 'heartbeat': return withLock_(() => heartbeat_(user, Number(req.video), Number(req.position)));
     case 'quiz': return withLock_(() => startQuiz_(user, Number(req.video)));
@@ -105,22 +112,14 @@ function login_(idToken) {
   const user = { email: String(t.email).toLowerCase(), name: t.name || t.email };
   const session = Utilities.getUuid();
   CacheService.getScriptCache().put('s_' + session, JSON.stringify(user), SESSION_SECONDS);
-  if (courseOpen_(user)) withLock_(() => deadline_(user));
+  if (courseOpen_(user)) withLock_(() => registerUser_(user));
   return Object.assign({ session: session }, state_(user));
 }
 
-/**
- * Termín ukončenia kurzu (ms). Pri prvom prihlásení do aktívneho vzdelávania sa učiteľ
- * zapíše do hárku Ucastnici. S create = false sa nič nezapisuje a bez záznamu vráti null.
- */
-function deadline_(user, create) {
-  const row = rows_(SHEET.USERS).find(r => String(r[0]).toLowerCase() === user.email);
-  if (row && row[3] instanceof Date) return row[3].getTime();
-  if (create === false) return null;
-  const first = new Date();
-  const deadline = new Date(first.getTime() + CONFIG.HOURS_LIMIT * 3600 * 1000);
-  sheet_(SHEET.USERS).appendRow([user.email, user.name, first, deadline]);
-  return deadline.getTime();
+/** Pri prvom prihlásení do aktívneho vzdelávania zapíše učiteľa do hárku Ucastnici (len evidencia). */
+function registerUser_(user) {
+  if (rows_(SHEET.USERS).some(r => String(r[0]).toLowerCase() === user.email)) return;
+  sheet_(SHEET.USERS).appendRow([user.email, user.name, new Date()]);
 }
 
 function getSession_(session) {
@@ -229,10 +228,12 @@ function state_(user) {
     courseHours: CONFIG.COURSE_HOURS,
     passPercent: CONFIG.PASS_PERCENT,
     watchPercent: CONFIG.WATCH_PERCENT,
-    hoursLimit: CONFIG.HOURS_LIMIT,
     active: isActive_(),
     canStart: courseOpen_(user),
-    deadline: deadline_(user, courseOpen_(user)),
+    admin: isAdmin_(user),
+    closeAt: closeAtToday_(),
+    closeLabel: closeTime_().map(n => String(n).padStart(2, '0')).join(':'),
+    estimateHours: estimateHours_(),
     now: Date.now(),
     videos: videos,
     certificate: publicCert_(findCert_(user.email)),
@@ -306,12 +307,41 @@ function submitQuiz_(user, i, answers) {
 
 // ---------- Nastavenia ----------
 
-/** Hodnota z hárku Nastavenia podľa názvu v stĺpci A (bez ohľadu na veľké písmená). */
+/** Hodnota z hárku Nastavenia podľa začiatku názvu v stĺpci A (bez ohľadu na veľké písmená). */
 function setting_(name) {
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.SETTINGS);
   if (!sh) return null;
-  const row = sh.getDataRange().getValues().find(r => String(r[0]).trim().toLowerCase() === name.toLowerCase());
+  const row = sh.getDataRange().getValues().find(r => String(r[0]).trim().toLowerCase().indexOf(name.toLowerCase()) === 0);
   return row ? row[1] : null;
+}
+
+/** Čas konca vzdelávania [hodiny, minúty] z Nastavení (predvolene 17:00). */
+function closeTime_() {
+  const v = setting_('Koniec');
+  if (v instanceof Date) {
+    return Utilities.formatDate(v, SpreadsheetApp.getActive().getSpreadsheetTimeZone(), 'HH:mm').split(':').map(Number);
+  }
+  if (typeof v === 'number' && v > 0 && v < 1) { // čas uložený ako zlomok dňa
+    const mins = Math.round(v * 24 * 60);
+    return [Math.floor(mins / 60), mins % 60];
+  }
+  const m = String(v == null ? '' : v).match(/(\d{1,2})\s*[:.]\s*(\d{2})/);
+  return m ? [Number(m[1]), Number(m[2])] : [17, 0];
+}
+
+/** Dnešný čas konca vzdelávania v časovom pásme skriptu (ms). */
+function closeAtToday_() {
+  const tz = Session.getScriptTimeZone();
+  const now = new Date();
+  const hm = closeTime_().map(n => String(n).padStart(2, '0'));
+  return Date.parse(Utilities.formatDate(now, tz, 'yyyy-MM-dd') + 'T' + hm[0] + ':' + hm[1] + ':00'
+    + Utilities.formatDate(now, tz, 'XXX'));
+}
+
+/** Odhadovaný čas celého vzdelávania v hodinách (pre upozornenie pri neskorom začiatku). */
+function estimateHours_() {
+  const v = Number(setting_('Odhadovaný čas'));
+  return v > 0 ? v : 7;
 }
 
 /** Vzdelávanie je aktívne, ak je v Nastaveniach 1 (bez hárku sa berie ako aktívne). */

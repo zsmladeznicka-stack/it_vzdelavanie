@@ -63,9 +63,10 @@
       renderHome();
       throw new Error('Vzdelávanie momentálne nie je aktívne.');
     }
-    if (out.error === 'DEADLINE') {
-      onDeadline();
-      throw new Error('Čas na absolvovanie vzdelávania uplynul.');
+    if (out.error === 'CLOSED') {
+      state.closedByServer = true;
+      onClosed();
+      throw new Error('Dnešný čas na vzdelávanie skončil.');
     }
     if (out.error === 'SESSION_EXPIRED') {
       logout('Platnosť prihlásenia vypršala. Prihláste sa znova – váš priebeh je uložený.');
@@ -137,7 +138,8 @@
     state = {
       user: r.user, school: r.school, course: r.course, courseHours: r.courseHours, passPercent: r.passPercent,
       watchPercent: r.watchPercent,
-      hoursLimit: r.hoursLimit, deadline: r.deadline, clockOffset: r.now - Date.now(),
+      clockOffset: r.now - Date.now(), admin: !!r.admin,
+      closeAt: r.closeAt, closeLabel: r.closeLabel || '17:00', estimateHours: r.estimateHours || 7,
       active: r.active !== false,
       canStart: r.canStart !== undefined ? r.canStart : r.active !== false,
       videos: r.videos, certificate: r.certificate,
@@ -200,23 +202,35 @@
 
   // ---------- Prehľad ----------
 
-  function isExpired() {
-    return !!state.deadline && Date.now() + state.clockOffset > state.deadline;
+  /** Zostávajúci čas do dnešného konca vzdelávania (ms). */
+  function remainingMs() {
+    return state.closeAt ? state.closeAt - (Date.now() + state.clockOffset) : Infinity;
   }
 
-  function fmtDateTime(ms) {
-    return new Date(ms).toLocaleString('sk-SK', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  /** Po čase konca nemôže učiteľ pokračovať (administrátor áno). */
+  function isClosed() {
+    return !state.admin && (state.closedByServer || remainingMs() <= 0);
   }
 
-  function onDeadline() {
-    if (!isExpired()) state.deadline = Date.now() + state.clockOffset - 1; // server rozhodol, že termín uplynul
+  function fmtHM(ms) {
+    const mins = Math.max(0, Math.floor(ms / 60000));
+    return `${Math.floor(mins / 60)} h ${mins % 60} min`;
+  }
+
+  function onClosed() {
     closePlayer();
-    clearInterval(deadlineTimer);
+    clearInterval(closeTimer);
     renderHome();
   }
 
   function currentIndex() {
     return state.videos.findIndex((v) => !v.quizPassed); // -1 = všetko splnené
+  }
+
+  function latestStart() {
+    const [h, m] = state.closeLabel.split(':').map(Number);
+    const mins = h * 60 + m - Math.round(state.estimateHours * 60);
+    return `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`;
   }
 
   function renderHowto() {
@@ -230,10 +244,13 @@
         <li>Postupujete v poradí <strong>video → test → ďalšie video</strong>. Ďalší krok sa odomkne až po splnení predchádzajúceho.</li>
         <li>Po splnení posledného testu získate <strong>osvedčenie</strong>, ktoré si môžete stiahnuť ako PDF alebo vytlačiť.</li>
       </ul>
-      <h3>Ukladanie priebehu</h3>
+      <h3>Čas a ukladanie priebehu</h3>
       <ul>
-        <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a neskôr pokračovať tam, kde ste skončili.</li>
-        <li>Odporúčame vyhradiť si dostatok času, ideálne v jednom alebo dvoch blokoch.</li>
+        <li>Vzdelávanie prebieha v jeden deň a je dostupné <strong>do ${state.closeLabel}</strong>. Celé trvá približne
+          <strong>${state.estimateHours} hodín</strong>, preto odporúčame začať najneskôr o <strong>${latestStart()}</strong>.</li>
+        <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a pokračovať tam, kde ste skončili.</li>
+        <li>Ak do ${state.closeLabel} nestihnete všetko, dokončené videá a testy sa nestratia a pokračovať budete môcť v ďalšom termíne.</li>
+        <li>Osvedčenie si môžete stiahnuť kedykoľvek, aj neskôr.</li>
       </ul>
       <h3>Pozeranie videa</h3>
       <ul>
@@ -272,7 +289,7 @@
     state.videos.forEach((v, i) => {
       const vCls = v.videoDone ? 'done' : i === cur ? 'current' : '';
       const progress = !v.videoDone && v.watched > 0 ? ` · pozreté ${fmt(v.watched)}` : '';
-      const again = v.videoDone && state.canStart && !isExpired()
+      const again = v.videoDone && state.canStart && !isClosed()
         ? `<button class="btn small" data-review="${i}">▶ Pozrieť znova</button>` : '';
       html += `<li class="${vCls}">${icon(vCls, n++)}<span class="grow">Video ${i + 1}: ${esc(v.title)}
         <span class="sub">${fmt(v.duration)}${progress}</span></span>${again}</li>`;
@@ -292,22 +309,29 @@
     } else if (!state.canStart) {
       dl.className = 'banner admin notice';
       dl.innerHTML = '<span class="admin-icon" aria-hidden="true">i</span><div><strong>Vzdelávanie zatiaľ nie je spustené</strong>'
-        + '<br>Môžete si prečítať, ako funguje, a pozrieť si zoznam videí. Videá a testy bude možné spustiť po zahájení vzdelávania. '
-        + `Čas na absolvovanie (${state.hoursLimit} hodín) sa začne počítať až od vášho prvého prihlásenia po spustení.</div>`;
+        + '<br>Môžete si prečítať, ako funguje, a pozrieť si zoznam videí. '
+        + 'Videá a testy bude možné spustiť po zahájení vzdelávania.</div>';
       dl.hidden = false;
       btn.hidden = true;
-    } else if (!state.deadline) {
-      dl.hidden = true;
-    } else if (isExpired()) {
-      dl.className = 'banner error';
-      dl.textContent = `Čas na absolvovanie vzdelávania (${state.hoursLimit} hodín od prvého prihlásenia) uplynul `
-        + `${fmtDateTime(state.deadline)}. Vzdelávanie už nie je možné dokončiť. Obráťte sa na administrátora.`;
+    } else if (isClosed()) {
+      dl.className = 'banner admin closed';
+      dl.innerHTML = `<span class="admin-icon" aria-hidden="true">■</span><div><strong>Dnešný čas na vzdelávanie skončil o ${state.closeLabel}</strong>`
+        + '<br>Váš doterajší priebeh je uložený – dokončené videá a testy sa nestratia. '
+        + 'O termíne, kedy budete môcť pokračovať, vás bude informovať vedenie školy.</div>';
       dl.hidden = false;
       btn.hidden = true;
+    } else if (remainingMs() < state.estimateHours * 3600000) {
+      dl.className = 'banner admin warnbox';
+      dl.innerHTML = '<span class="admin-icon" aria-hidden="true">!</span>'
+        + `<div><strong>Do konca dnešného vzdelávania (${state.closeLabel}) zostáva ${fmtHM(remainingMs())}</strong>`
+        + `<br>Celé vzdelávanie trvá približne ${state.estimateHours} hodín, preto ho dnes možno nestihnete dokončiť. `
+        + 'Nevadí – váš priebeh sa priebežne ukladá. Dokončené videá a testy ostanú započítané '
+        + 'a pokračovať budete môcť v ďalšom termíne, ktorý určí vedenie školy.</div>';
+      dl.hidden = false;
     } else {
-      dl.className = 'banner warn';
-      dl.textContent = `Celé vzdelávanie je potrebné dokončiť do ${fmtDateTime(state.deadline)} `
-        + `(${state.hoursLimit} hodín od prvého prihlásenia).`;
+      dl.className = 'banner info';
+      dl.innerHTML = `Vzdelávanie je dnes dostupné <strong>do ${state.closeLabel}</strong>. `
+        + `Celé trvá približne ${state.estimateHours} hodín.`;
       dl.hidden = false;
     }
     if (!state.active && state.canStart && cur !== -1) {
@@ -333,7 +357,7 @@
   // ---------- Video ----------
 
   const ytApi = new Promise((resolve) => { window.onYouTubeIframeAPIReady = resolve; });
-  let deadlineTimer = null;
+  let closeTimer = null;
   let player = null, tick = null, vIndex = -1, maxWatched = 0, lastBeatAt = 0, beatBusy = false, beatAgain = false;
   // Opakované pozretie dopozeraného videa: voľné pretáčanie a nič sa neposiela na server,
   // takže splnený priebeh sa nemôže zmeniť.
@@ -379,8 +403,8 @@
     setNotice(demoNote + (!review && v.watched > 0 && !v.videoDone ? `Pokračujete od ${fmt(v.watched)}.` : ''));
     updateBar(maxWatched);
     show('video');
-    clearInterval(deadlineTimer);
-    deadlineTimer = setInterval(() => { if (isExpired()) onDeadline(); }, 5000);
+    clearInterval(closeTimer);
+    closeTimer = setInterval(() => { if (isClosed()) onClosed(); }, 5000);
     await ytApi;
     if (vIndex !== i) return;
     $('#yt-host').innerHTML = '<div id="yt"></div>';
@@ -406,7 +430,7 @@
 
   function closePlayer() {
     clearInterval(tick);
-    clearInterval(deadlineTimer);
+    clearInterval(closeTimer);
     tick = null;
     if (player) {
       if (isPlaying()) player.pauseVideo();
