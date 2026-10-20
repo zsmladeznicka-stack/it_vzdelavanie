@@ -227,6 +227,12 @@
     return state.videos.findIndex((v) => !v.quizPassed); // -1 = všetko splnené
   }
 
+  /** Napr. „6 až 7 hodín“ pri odhadovanom čase 7 h. */
+  function durationText() {
+    const h = state.estimateHours;
+    return h > 1 ? `${h - 1} až ${h} hodín` : `${h} hodiny`;
+  }
+
   function latestStart() {
     const [h, m] = state.closeLabel.split(':').map(Number);
     const mins = h * 60 + m - Math.round(state.estimateHours * 60);
@@ -247,9 +253,9 @@
       <h3>Čas a ukladanie priebehu</h3>
       <ul>
         <li>Vzdelávanie prebieha v jeden deň a je dostupné <strong>do ${state.closeLabel}</strong>. Celé trvá približne
-          <strong>${state.estimateHours} hodín</strong>, preto odporúčame začať najneskôr o <strong>${latestStart()}</strong>.</li>
+          <strong>${durationText()}</strong>, preto odporúčame začať najneskôr o <strong>${latestStart()}</strong>.</li>
         <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a pokračovať tam, kde ste skončili.</li>
-        <li>Ak do ${state.closeLabel} nestihnete všetko, dokončené videá a testy sa nestratia a pokračovať budete môcť v ďalšom termíne.</li>
+        <li>Ak do ${state.closeLabel} nestihnete všetko, dokončené videá a testy sa nestratia.</li>
         <li>Osvedčenie si môžete stiahnuť kedykoľvek, aj neskôr.</li>
       </ul>
       <h3>Pozeranie videa</h3>
@@ -316,22 +322,19 @@
     } else if (isClosed()) {
       dl.className = 'banner admin closed';
       dl.innerHTML = `<span class="admin-icon" aria-hidden="true">■</span><div><strong>Dnešný čas na vzdelávanie skončil o ${state.closeLabel}</strong>`
-        + '<br>Váš doterajší priebeh je uložený – dokončené videá a testy sa nestratia. '
-        + 'O termíne, kedy budete môcť pokračovať, vás bude informovať vedenie školy.</div>';
+        + '<br>Váš doterajší priebeh je uložený – dokončené videá a testy sa nestratia.</div>';
       dl.hidden = false;
       btn.hidden = true;
     } else if (remainingMs() < state.estimateHours * 3600000) {
       dl.className = 'banner admin warnbox';
       dl.innerHTML = '<span class="admin-icon" aria-hidden="true">!</span>'
         + `<div><strong>Do konca dnešného vzdelávania (${state.closeLabel}) zostáva ${fmtHM(remainingMs())}</strong>`
-        + `<br>Celé vzdelávanie trvá približne ${state.estimateHours} hodín, preto ho dnes možno nestihnete dokončiť. `
-        + 'Nevadí – váš priebeh sa priebežne ukladá. Dokončené videá a testy ostanú započítané '
-        + 'a pokračovať budete môcť v ďalšom termíne, ktorý určí vedenie školy.</div>';
+        + `<br>Celé vzdelávanie trvá približne ${durationText()}. Váš priebeh sa priebežne ukladá.</div>`;
       dl.hidden = false;
     } else {
       dl.className = 'banner info';
       dl.innerHTML = `Vzdelávanie je dnes dostupné <strong>do ${state.closeLabel}</strong>. `
-        + `Celé trvá približne ${state.estimateHours} hodín.`;
+        + `Celé trvá približne ${durationText()}.`;
       dl.hidden = false;
     }
     if (!state.active && state.canStart && cur !== -1) {
