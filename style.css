@@ -77,6 +77,7 @@ label input { display: block; width: 100%; margin-top: 4px; padding: 8px 10px; f
 .banner { padding: 10px 14px; border-radius: 8px; margin: 12px 0; background: var(--warn-bg); color: var(--warn); }
 .banner.error { background: var(--err-bg); color: var(--err); max-width: 1000px; margin: 12px auto 0; }
 .banner.ok { background: var(--ok-bg); color: var(--ok); }
+.banner.info { background: #e8f0fe; color: #123f8c; }
 
 /* Testovací režim */
 .god-bar {

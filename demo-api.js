@@ -34,6 +34,8 @@ window.DemoApi = (() => {
     passPercent: 80,
     watchPercent: 98,
     hoursLimit: 24,
+    active: true,
+    canStart: true,
     deadline: db.deadline,
     now: Date.now(),
     videos: VIDEOS.map((v, i) => Object.assign({}, v, db.progress[i])),

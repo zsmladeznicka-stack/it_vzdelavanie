@@ -42,6 +42,7 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
    - **Priebeh**: tu priebežne vidíte, kto koľko pozrel a ako dopadli testy
    - **Osvedcenia**: zoznam vydaných osvedčení s číslami
    - **Ucastnici**: čas prvého prihlásenia a termín ukončenia každého učiteľa
+   - **Nastavenia**: `Vzdelávanie aktívne` = `1` (učitelia môžu začať) alebo `0` (učitelia vidia úvodnú stránku a návod, ale videá ani testy nespustia a 24-hodinové okno sa im nezačne počítať). Administrátori (`ADMINS`) môžu aplikáciu používať aj pri `0`. Zmena sa prejaví hneď.
 6. Hárky **Videa** a **Otazky** prepíšte vlastnými údajmi. Ukážkové riadky zmažte.
 
 > Video sa ráta ako dopozerané, keď učiteľ pozrel aspoň **98 %** jeho dĺžky (nastavenie `WATCH_PERCENT` v `CONFIG`). Až potom sa zobrazí tlačidlo na test.

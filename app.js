@@ -56,6 +56,13 @@
       });
       out = await res.json();
     }
+    if (out.error === 'INACTIVE') {
+      state.active = false;
+      state.canStart = false;
+      closePlayer();
+      renderHome();
+      throw new Error('Vzdelávanie momentálne nie je aktívne.');
+    }
     if (out.error === 'DEADLINE') {
       onDeadline();
       throw new Error('Čas na absolvovanie vzdelávania uplynul.');
@@ -131,6 +138,8 @@
       user: r.user, school: r.school, course: r.course, courseHours: r.courseHours, passPercent: r.passPercent,
       watchPercent: r.watchPercent,
       hoursLimit: r.hoursLimit, deadline: r.deadline, clockOffset: r.now - Date.now(),
+      active: r.active !== false,
+      canStart: r.canStart !== undefined ? r.canStart : r.active !== false,
       videos: r.videos, certificate: r.certificate,
     };
     $('#course-name').textContent = state.course;
@@ -192,7 +201,7 @@
   // ---------- Prehľad ----------
 
   function isExpired() {
-    return Date.now() + state.clockOffset > state.deadline;
+    return !!state.deadline && Date.now() + state.clockOffset > state.deadline;
   }
 
   function fmtDateTime(ms) {
@@ -258,7 +267,7 @@
     state.videos.forEach((v, i) => {
       const vCls = v.videoDone ? 'done' : i === cur ? 'current' : '';
       const progress = !v.videoDone && v.watched > 0 ? ` · pozreté ${fmt(v.watched)}` : '';
-      const again = v.videoDone && !isExpired()
+      const again = v.videoDone && state.canStart && !isExpired()
         ? `<button class="btn small" data-review="${i}">▶ Pozrieť znova</button>` : '';
       html += `<li class="${vCls}">${icon(vCls, n++)}<span class="grow">Video ${i + 1}: ${esc(v.title)}
         <span class="sub">${fmt(v.duration)}${progress}</span></span>${again}</li>`;
@@ -275,6 +284,15 @@
     btn.hidden = false;
     if (cur === -1) {
       dl.hidden = true;
+    } else if (!state.canStart) {
+      dl.className = 'banner info';
+      dl.innerHTML = '<strong>Vzdelávanie zatiaľ nie je spustené.</strong> Môžete si prečítať, ako funguje, '
+        + 'a pozrieť si zoznam videí. Videá a testy bude možné spustiť po zahájení vzdelávania. '
+        + `Čas na absolvovanie (${state.hoursLimit} hodín) sa začne počítať až od vášho prvého prihlásenia po spustení.`;
+      dl.hidden = false;
+      btn.hidden = true;
+    } else if (!state.deadline) {
+      dl.hidden = true;
     } else if (isExpired()) {
       dl.className = 'banner error';
       dl.textContent = `Čas na absolvovanie vzdelávania (${state.hoursLimit} hodín od prvého prihlásenia) uplynul `
@@ -285,6 +303,11 @@
       dl.className = 'banner warn';
       dl.textContent = `Celé vzdelávanie je potrebné dokončiť do ${fmtDateTime(state.deadline)} `
         + `(${state.hoursLimit} hodín od prvého prihlásenia).`;
+      dl.hidden = false;
+    }
+    if (!state.active && state.canStart && cur !== -1) {
+      dl.className = 'banner info';
+      dl.textContent = 'Vzdelávanie je pre učiteľov vypnuté (Nastavenia: 0). Ako administrátor ho môžete testovať.';
       dl.hidden = false;
     }
     if (cur === -1) {
