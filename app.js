@@ -592,7 +592,7 @@
     $('#cert-school').textContent = state.school.replace(' - ', '\n');
     $('#cert-name').textContent = c.name;
     $('#cert-course').textContent = '„' + state.course + '“';
-    $('#cert-text').textContent = `Vzdelávanie v rozsahu ${state.courseHours} hodín`;
+    $('#cert-text').textContent = `Vzdelávanie v rozsahu ${state.courseHours} vyučovacích hodín (1 vyučovacia hodina = 45 minút)`;
     $('#cert-date').textContent = c.date;
     $('#cert-id').textContent = c.id;
     show('cert');

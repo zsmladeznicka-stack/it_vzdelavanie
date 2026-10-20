@@ -8,7 +8,7 @@ const CONFIG = {
   DOMAIN: 'koharysuli.sk',
   SCHOOL_NAME: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
   COURSE_NAME: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
-  COURSE_HOURS: 10, // rozsah vzdelávania uvedený na osvedčení
+  COURSE_HOURS: 10, // rozsah vzdelávania na osvedčení vo vyučovacích hodinách (45 min)
   CERT_PREFIX: 'OSV',
   // Účty, ktoré si môžu zapnúť testovací režim (god mode)
   ADMINS: ['fazekas.csaba@koharysuli.sk'],
