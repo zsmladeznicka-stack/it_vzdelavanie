@@ -277,7 +277,7 @@
       <h3>Osvedčenie</h3>
       <ul>
         <li>Osvedčenie sa vygeneruje <strong>bez podpisu a pečiatky</strong>.</li>
-        <li>Osvedčenie si stiahnite alebo vytlačte – <strong>podpíše a opečiatkuje ho fyzicky vedenie školy</strong>.</li>
+        <li>Osvedčenie si stiahnite alebo vytlačte – <strong>podpíše a opečiatkuje ho fyzicky riaditeľ školy</strong>.</li>
       </ul>`;
     // pri prvej návšteve je návod rozbalený, neskôr zbalený
     $('#howto').open = !state.videos.some((v) => v.watched > 0);
