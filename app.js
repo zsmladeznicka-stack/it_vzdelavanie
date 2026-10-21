@@ -448,6 +448,8 @@
   function onTick() {
     if (!player || !player.getCurrentTime) return;
     if (player.getPlaybackRate && player.getPlaybackRate() !== 1) player.setPlaybackRate(1);
+    // YouTube titulky občas zapne znova (napr. po pozastavení) – priebežne ich vypíname
+    if (!captionsOn && player.getOptions) try { captionsOff(); } catch (e) { /* modul ešte nie je načítaný */ }
     const t = player.getCurrentTime();
     if (review) {
       updateBar(t);
@@ -480,16 +482,28 @@
         player.loadModule('captions');
         player.setOption('captions', 'track', { languageCode: 'sk' });
       } else {
-        player.unloadModule('captions');
+        captionsOff();
       }
     } catch (e) { /* prehrávač ešte nie je pripravený */ }
+  }
+
+  /** Vypne titulky, ak ich YouTube zobrazuje (napr. podľa nastavenia diváka). */
+  function captionsOff() {
+    const mods = (player.getOptions && player.getOptions()) || [];
+    for (const m of ['captions', 'cc']) {
+      if (!mods.includes(m)) continue;
+      const track = player.getOption(m, 'track');
+      if (track && track.languageCode) {
+        player.setOption(m, 'track', {});
+        player.unloadModule(m);
+      }
+    }
   }
 
   function onPlayerState(e) {
     $('#play').textContent = e.data === YT_PLAYING || e.data === YT_BUFFERING ? '❚❚ Pozastaviť' : '▶ Prehrať';
     if (e.data === YT_PLAYING) setNotice('');
-    // YouTube po pozastavení titulky niekedy znova zapne, preto vypnutie opakujeme pri každom spustení
-    if (e.data === YT_PLAYING && (!captionsOn || !captionsApplied)) { captionsApplied = true; applyCaptions(); }
+    if (e.data === YT_PLAYING && !captionsApplied) { captionsApplied = true; applyCaptions(); }
     if (e.data === YT_PLAYING || e.data === YT_PAUSED) heartbeat();
     if (e.data === YT_ENDED) {
       maxWatched = Math.max(maxWatched, player.getDuration());
