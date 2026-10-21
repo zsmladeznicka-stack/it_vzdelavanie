@@ -488,7 +488,8 @@
   function onPlayerState(e) {
     $('#play').textContent = e.data === YT_PLAYING || e.data === YT_BUFFERING ? '❚❚ Pozastaviť' : '▶ Prehrať';
     if (e.data === YT_PLAYING) setNotice('');
-    if (e.data === YT_PLAYING && !captionsApplied) { captionsApplied = true; applyCaptions(); }
+    // YouTube po pozastavení titulky niekedy znova zapne, preto vypnutie opakujeme pri každom spustení
+    if (e.data === YT_PLAYING && (!captionsOn || !captionsApplied)) { captionsApplied = true; applyCaptions(); }
     if (e.data === YT_PLAYING || e.data === YT_PAUSED) heartbeat();
     if (e.data === YT_ENDED) {
       maxWatched = Math.max(maxWatched, player.getDuration());
