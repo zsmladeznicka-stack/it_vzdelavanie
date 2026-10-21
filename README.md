@@ -6,7 +6,7 @@ Učiteľ sa prihlási školským Google účtom (@koharysuli.sk). Potom postupne
 - Pri prepnutí karty, minimalizácii alebo prechode do iného okna sa video pozastaví.
 - Ďalšie video sa odomkne až po splnení testu (aspoň 80 %). Neúspešný test sa dá opakovať.
 - Testy nemajú časový limit.
-- Vzdelávanie prebieha v jeden deň, ktorý určí administrátor zapnutím v hárku **Nastavenia**. Pracovať sa dá do **17:00** (nastaviteľné). Kto otvorí aplikáciu neskôr, než je odhadovaný čas (7 h) pred koncom, uvidí upozornenie, koľko času mu zostáva. Priebeh sa vždy ukladá a po 17:00 sa nestratí.
+- Vzdelávanie prebieha v jeden deň, ktorý určí administrátor zapnutím v hárku **Nastavenia**. Pracovať sa dá do **17:00** (nastaviteľné). Kto otvorí aplikáciu neskôr, než je odhadovaný čas (6 h) pred koncom, uvidí upozornenie, koľko času mu zostáva. Priebeh sa vždy ukladá a po 17:00 sa nestratí.
 - Osvedčenie si možno stiahnuť kedykoľvek, aj po 17:00 a v iné dni.
 - Server zaznamenáva pozretý čas podľa reálne uplynutého času. Video sa preto nedá „dopozerať“ rýchlejšie, ani keď niekto obíde prehrávač.
 - Správne odpovede sú len v tabuľke, prehliadač ich nikdy nedostane.
@@ -46,7 +46,7 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
    - **Nastavenia**:
      - `Vzdelávanie aktívne` = `1` (učitelia môžu pracovať) alebo `0` (učitelia vidia úvodnú stránku a návod, ale videá ani testy nespustia).
      - `Koniec (čas)` = čas, do ktorého sa dá v daný deň pracovať, napr. `17:00`. Odovzdať rozpracovaný test možno ešte 10 minút po konci.
-     - `Odhadovaný čas (hodiny)` = koľko hodín celé vzdelávanie približne trvá (`7`); podľa toho sa zobrazuje upozornenie pri neskorom začiatku.
+     - `Odhadovaný čas (hodiny)` = koľko hodín celé vzdelávanie približne trvá (`6`); podľa toho sa zobrazuje upozornenie pri neskorom začiatku.
      - Administrátori (`ADMINS`) môžu aplikáciu používať vždy, aj pri `0` a po čase konca. Zmeny sa prejavia hneď.
 6. Hárky **Videa** a **Otazky** prepíšte vlastnými údajmi. Ukážkové riadky zmažte.
 

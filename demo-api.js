@@ -38,7 +38,7 @@ window.DemoApi = (() => {
     admin: true, // v ukážke sa čas konca nevynucuje
     closeAt: new Date().setHours(17, 0, 0, 0),
     closeLabel: '17:00',
-    estimateHours: 7,
+    estimateHours: 6,
     now: Date.now(),
     videos: VIDEOS.map((v, i) => Object.assign({}, v, db.progress[i])),
     certificate: db.cert,

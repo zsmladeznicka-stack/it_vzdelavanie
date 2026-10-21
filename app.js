@@ -227,10 +227,10 @@
     return state.videos.findIndex((v) => !v.quizPassed); // -1 = všetko splnené
   }
 
-  /** Napr. „6 až 7 hodín“ pri odhadovanom čase 7 h. */
+  /** Napr. „6 hodín“ pri odhadovanom čase 6 h. */
   function durationText() {
     const h = state.estimateHours;
-    return h > 1 ? `${h - 1} až ${h} hodín` : `${h} hodiny`;
+    return `${h} ${h === 1 ? 'hodinu' : h >= 2 && h <= 4 ? 'hodiny' : 'hodín'}`;
   }
 
   function latestStart() {
