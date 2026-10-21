@@ -227,10 +227,9 @@
     return state.videos.findIndex((v) => !v.quizPassed); // -1 = všetko splnené
   }
 
-  /** Napr. „6 hodín“ pri odhadovanom čase 6 h. */
+  /** Text o dĺžke vzdelávania je pevný, nezávisí od nastavenia v tabuľke. */
   function durationText() {
-    const h = state.estimateHours;
-    return `${h} ${h === 1 ? 'hodinu' : h >= 2 && h <= 4 ? 'hodiny' : 'hodín'}`;
+    return '6 hodín';
   }
 
   function latestStart() {
