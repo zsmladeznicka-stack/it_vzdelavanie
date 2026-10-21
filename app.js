@@ -363,7 +363,6 @@
   // Opakované pozretie dopozeraného videa: voľné pretáčanie a nič sa neposiela na server,
   // takže splnený priebeh sa nemôže zmeniť.
   let review = false;
-  let captionsOn = false, captionsApplied = false; // titulky sú predvolene vypnuté
 
   function loadYouTube() {
     if (document.querySelector('script[src*="youtube.com/iframe_api"]')) return;
@@ -416,7 +415,7 @@
       height: '100%',
       playerVars: {
         controls: 0, disablekb: 1, fs: 0, rel: 0, modestbranding: 1, iv_load_policy: 3,
-        playsinline: 1, cc_load_policy: 0, start: review ? 0 : Math.floor(Math.max(0, maxWatched - 3)),
+        playsinline: 1, start: review ? 0 : Math.floor(Math.max(0, maxWatched - 3)),
       },
       events: {
         onReady: () => {
@@ -428,7 +427,6 @@
       },
     });
     player = p;
-    captionsApplied = false;
   }
 
   function closePlayer() {
@@ -448,8 +446,6 @@
   function onTick() {
     if (!player || !player.getCurrentTime) return;
     if (player.getPlaybackRate && player.getPlaybackRate() !== 1) player.setPlaybackRate(1);
-    // YouTube titulky občas zapne znova (napr. po pozastavení) – priebežne ich vypíname
-    if (!captionsOn && player.getOptions) try { captionsOff(); } catch (e) { /* modul ešte nie je načítaný */ }
     const t = player.getCurrentTime();
     if (review) {
       updateBar(t);
@@ -473,37 +469,9 @@
     $('#time').textContent = fmt(t) + ' / ' + fmt(dur);
   }
 
-  /** Modul titulkov je dostupný až po spustení prehrávania. */
-  function applyCaptions() {
-    $('#cc').textContent = captionsOn ? 'Titulky: zap.' : 'Titulky: vyp.';
-    if (!player || !player.loadModule) return;
-    try {
-      if (captionsOn) {
-        player.loadModule('captions');
-        player.setOption('captions', 'track', { languageCode: 'sk' });
-      } else {
-        captionsOff();
-      }
-    } catch (e) { /* prehrávač ešte nie je pripravený */ }
-  }
-
-  /** Vypne titulky, ak ich YouTube zobrazuje (napr. podľa nastavenia diváka). */
-  function captionsOff() {
-    const mods = (player.getOptions && player.getOptions()) || [];
-    for (const m of ['captions', 'cc']) {
-      if (!mods.includes(m)) continue;
-      const track = player.getOption(m, 'track');
-      if (track && track.languageCode) {
-        player.setOption(m, 'track', {});
-        player.unloadModule(m);
-      }
-    }
-  }
-
   function onPlayerState(e) {
     $('#play').textContent = e.data === YT_PLAYING || e.data === YT_BUFFERING ? '❚❚ Pozastaviť' : '▶ Prehrať';
     if (e.data === YT_PLAYING) setNotice('');
-    if (e.data === YT_PLAYING && !captionsApplied) { captionsApplied = true; applyCaptions(); }
     if (e.data === YT_PLAYING || e.data === YT_PAUSED) heartbeat();
     if (e.data === YT_ENDED) {
       maxWatched = Math.max(maxWatched, player.getDuration());
@@ -685,7 +653,6 @@
   $('#video-back').onclick = () => { closePlayer(); renderHome(); };
   $('#to-quiz').onclick = () => openQuiz(vIndex);
   $('#play').onclick = togglePlay;
-  $('#cc').onclick = () => { captionsOn = !captionsOn; applyCaptions(); };
   $('#shield').onclick = togglePlay;
   $('#volume').oninput = (e) => { if (player && player.setVolume) player.setVolume(Number(e.target.value)); };
   $('#fullscreen').onclick = () => {
