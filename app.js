@@ -240,10 +240,12 @@
 
   function renderHowto() {
     const n = state.videos.length;
+    const total = state.videos.reduce((s, v) => s + v.duration, 0);
+    const h = Math.floor(total / 3600), m = Math.round(total / 60) % 60;
     $('#howto-body').innerHTML = `
       <h3>Priebeh vzdelávania</h3>
       <ul>
-        <li>Vzdelávanie tvorí <strong>${n} videí</strong> (spolu približne <strong>5 h</strong>). Po každom videu nasleduje krátky <strong>test</strong>.</li>
+        <li>Vzdelávanie tvorí <strong>${n} videí</strong> (spolu približne <strong>${h} h ${m} min</strong>). Po každom videu nasleduje krátky <strong>test</strong>.</li>
         <li>Postupujete v poradí <strong>video → test → ďalšie video</strong>. Ďalší krok sa odomkne až po splnení predchádzajúceho.</li>
         <li>Po splnení posledného testu získate <strong>osvedčenie</strong>, ktoré si môžete stiahnuť ako PDF alebo vytlačiť.</li>
       </ul>
