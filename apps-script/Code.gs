@@ -13,7 +13,7 @@ const CONFIG = {
   // Účty, ktoré si môžu zapnúť testovací režim (god mode)
   ADMINS: ['fazekas.csaba@koharysuli.sk'],
   PASS_PERCENT: 80,
-  WATCH_PERCENT: 98, // koľko percent videa treba pozrieť, aby sa odomkol test
+  WATCH_PERCENT: 95, // koľko percent videa treba pozrieť, aby sa odomkol test
 };
 
 const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici', SETTINGS: 'Nastavenia' };

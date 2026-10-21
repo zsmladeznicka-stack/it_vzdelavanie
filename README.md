@@ -50,7 +50,7 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
      - Administrátori (`ADMINS`) môžu aplikáciu používať vždy, aj pri `0` a po čase konca. Zmeny sa prejavia hneď.
 6. Hárky **Videa** a **Otazky** prepíšte vlastnými údajmi. Ukážkové riadky zmažte.
 
-> Video sa ráta ako dopozerané, keď učiteľ pozrel aspoň **98 %** jeho dĺžky (nastavenie `WATCH_PERCENT` v `CONFIG`). Až potom sa zobrazí tlačidlo na test.
+> Video sa ráta ako dopozerané, keď učiteľ pozrel aspoň **95 %** jeho dĺžky (nastavenie `WATCH_PERCENT` v `CONFIG`). Až potom sa zobrazí tlačidlo na test.
 
 ### 3. Google prihlásenie (Client ID)
 1. Otvorte https://console.cloud.google.com/ (školským účtom) a vytvorte nový projekt.

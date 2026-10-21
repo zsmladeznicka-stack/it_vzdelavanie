@@ -32,7 +32,7 @@ window.DemoApi = (() => {
     course: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
     courseHours: 10,
     passPercent: 80,
-    watchPercent: 98,
+    watchPercent: 95,
     active: true,
     canStart: true,
     admin: true, // v ukážke sa čas konca nevynucuje
