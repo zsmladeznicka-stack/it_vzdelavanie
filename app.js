@@ -267,7 +267,7 @@
       <h3>Test</h3>
       <ul>
         <li>Každý test má <strong>10 otázok</strong> a nemá časový limit. Na splnenie je potrebných aspoň <strong>${state.passPercent} %</strong> správnych odpovedí.</li>
-        <li>Ak test nesplníte, môžete ho <strong>opakovať</strong>.</li>
+        <li>Ak test nesplníte, môžete ho <strong>opakovať ľubovoľný počet krát</strong>.</li>
       </ul>
       <h3>Odporúčania</h3>
       <ul>
