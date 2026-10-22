@@ -29,7 +29,7 @@ window.DemoApi = (() => {
   const state = (db) => ({
     user: db.user,
     school: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
-    course: 'Zvýšenie digitálnych zručností pedagogických a odborných zamestnancov',
+    course: 'Kybernetická bezpečnosť a digitálne nástroje vo vyučovaní',
     courseHours: 10,
     passPercent: 80,
     watchPercent: 95,
