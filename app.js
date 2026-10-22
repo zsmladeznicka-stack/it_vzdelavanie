@@ -603,7 +603,6 @@
         <button class="btn primary big" id="result-next">${last ? 'Získať osvedčenie' : `Pokračovať na video ${i + 2}`}</button>`;
     } else {
       html += `<p>Na splnenie je potrebných ${state.passPercent} %. Test môžete zopakovať.</p>`;
-      if (r.lockNext) html += `<p>Pri ďalšom pokuse budú otázky, ktoré ste zodpovedali správne, zamknuté – odpovedať budete len na zvyšné.</p>`;
       html += `
         <button class="btn primary big" id="result-retry">Skúsiť znova</button>
         <p><button class="link" id="result-home">Späť na prehľad</button></p>`;
