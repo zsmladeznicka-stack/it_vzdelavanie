@@ -564,6 +564,7 @@
       </fieldset>`;
     }).join('');
     $('#quiz-submit').disabled = false;
+    $('#quiz-submit').textContent = 'Odovzdať test';
     show('quiz');
     if (godMode) markCorrectAnswers(i);
   }
@@ -576,6 +577,7 @@
     });
     if (answers.includes(-1) && !confirm('Niektoré otázky nemáte zodpovedané. Naozaj chcete test odovzdať?')) return;
     $('#quiz-submit').disabled = true;
+    $('#quiz-submit').textContent = 'Vyhodnocujem test…';
     const i = quiz.index;
     let r;
     try {
@@ -583,6 +585,7 @@
     } catch (err) {
       showError('Test sa nepodarilo odovzdať: ' + err.message);
       $('#quiz-submit').disabled = false;
+      $('#quiz-submit').textContent = 'Odovzdať test';
       return;
     }
     quiz = null;

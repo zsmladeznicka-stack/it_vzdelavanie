@@ -70,7 +70,7 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
    - Kto má prístup: **Ktokoľvek**. Nebojte sa, overenie školského účtu robí samotný skript.
 2. Skopírujte URL webovej aplikácie (končí na `/exec`) a vložte ju do `API_URL` v `config.js`.
 
-> Po každej zmene `Code.gs` treba ísť do **Nasadiť → Spravovať nasadenia → upraviť (ceruzka) → Verzia: Nová verzia**. URL zostane rovnaká. Zmeny v tabuľke (videá, otázky) sa prejavia hneď a nové nasadenie nepotrebujú.
+> Po každej zmene `Code.gs` treba ísť do **Nasadiť → Spravovať nasadenia → upraviť (ceruzka) → Verzia: Nová verzia**. URL zostane rovnaká. Zmeny v tabuľke (videá, otázky) nové nasadenie nepotrebujú a v aplikácii sa prejavia najneskôr do 1 minúty.
 
 ### 5. Zverejnenie stránky na GitHub Pages
 1. Repozitár: https://github.com/zsmladeznicka-stack/it_vzdelavanie

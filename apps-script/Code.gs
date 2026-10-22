@@ -147,15 +147,30 @@ function rows_(name) {
   return v;
 }
 
+// Videá a otázky sa menia zriedka – krátko ich držíme v pamäti (cache), aby server odpovedal rýchlejšie.
+// Zmeny v týchto hárkoch sa preto v aplikácii prejavia najneskôr do minúty.
+const SHEET_CACHE_SECONDS = 60;
+
+function cachedRows_(name) {
+  const cache = CacheService.getScriptCache();
+  const hit = cache.get('rows_' + name);
+  if (hit) return JSON.parse(hit);
+  const rows = rows_(name);
+  try {
+    cache.put('rows_' + name, JSON.stringify(rows), SHEET_CACHE_SECONDS);
+  } catch (e) { /* príliš veľké pre cache – nevadí */ }
+  return rows;
+}
+
 function videos_() {
-  return rows_(SHEET.VIDEOS)
+  return cachedRows_(SHEET.VIDEOS)
     .filter(r => r[0] !== '' && String(r[2]).trim())
     .map(r => ({ order: Number(r[0]), title: String(r[1]), youtubeId: String(r[2]).trim(), duration: Number(r[3]) || 0 }))
     .sort((a, b) => a.order - b.order);
 }
 
 function questions_(order) {
-  return rows_(SHEET.QUESTIONS)
+  return cachedRows_(SHEET.QUESTIONS)
     .filter(r => Number(r[0]) === order && String(r[1]).trim())
     .map(r => ({
       text: String(r[1]),
@@ -337,10 +352,14 @@ function ensureLockedHeader_() {
 // ---------- Nastavenia ----------
 
 /** Hodnota z hárku Nastavenia podľa začiatku názvu v stĺpci A (bez ohľadu na veľké písmená). */
+let settingsMemo_ = null; // Nastavenia sa v rámci jednej požiadavky čítajú len raz
+
 function setting_(name) {
-  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.SETTINGS);
-  if (!sh) return null;
-  const row = sh.getDataRange().getValues().find(r => String(r[0]).trim().toLowerCase().indexOf(name.toLowerCase()) === 0);
+  if (!settingsMemo_) {
+    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET.SETTINGS);
+    settingsMemo_ = sh ? sh.getDataRange().getValues() : [];
+  }
+  const row = settingsMemo_.find(r => String(r[0]).trim().toLowerCase().indexOf(name.toLowerCase()) === 0);
   return row ? row[1] : null;
 }
 
