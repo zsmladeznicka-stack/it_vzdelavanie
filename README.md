@@ -89,7 +89,7 @@ Hotovo. Tento odkaz pošlete učiteľom.
 
 ## Časté otázky
 
-**Dá sa test opakovať?** Áno, neobmedzene. Do tabuľky sa zapisuje počet pokusov aj najlepšie skóre.
+**Dá sa test opakovať?** Áno, neobmedzene. Do tabuľky sa zapisuje počet pokusov aj najlepšie skóre. Po 3. neúspešnom pokuse sa pri ďalších pokusoch otázky, ktoré učiteľ zodpovedal správne, zamknú (zapisujú sa do stĺpca **Zamknuté odpovede** v hárku **Priebeh**) a odpovedá už len na zvyšné. Hranica je nastavenie `LOCK_AFTER_TRIES` v `CONFIG`.
 
 **Čo ak učiteľ zavrie prehliadač uprostred videa?** Pri ďalšom prihlásení pokračuje od miesta, kde skončil (s presnosťou na približne 20 sekúnd).
 

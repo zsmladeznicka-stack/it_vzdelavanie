@@ -14,14 +14,16 @@ const CONFIG = {
   ADMINS: ['fazekas.csaba@koharysuli.sk'],
   PASS_PERCENT: 80,
   WATCH_PERCENT: 95, // koľko percent videa treba pozrieť, aby sa odomkol test
+  // Od tohto neúspešného pokusu sa správne zodpovedané otázky pri ďalších pokusoch zamknú
+  LOCK_AFTER_TRIES: 3,
 };
 
 const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici', SETTINGS: 'Nastavenia' };
 
 // Stĺpce hárku Priebeh (jeden riadok = jeden učiteľ × jedno video)
-const P = { EMAIL: 0, NAME: 1, VIDEO: 2, WATCHED: 3, DURATION: 4, DONE: 5, BEAT: 6, QUIZ_START: 7, TRIES: 8, BEST: 9, PASSED: 10, PASSED_AT: 11 };
+const P = { EMAIL: 0, NAME: 1, VIDEO: 2, WATCHED: 3, DURATION: 4, DONE: 5, BEAT: 6, QUIZ_START: 7, TRIES: 8, BEST: 9, PASSED: 10, PASSED_AT: 11, LOCKED: 12 };
 const PROGRESS_HEADER = ['E-mail', 'Meno', 'Video', 'Pozreté (s)', 'Dĺžka (s)', 'Video dopozerané', 'Posledný záznam',
-  'Test spustený', 'Pokusy', 'Najlepšie skóre (%)', 'Test splnený', 'Splnené dňa'];
+  'Test spustený', 'Pokusy', 'Najlepšie skóre (%)', 'Test splnený', 'Splnené dňa', 'Zamknuté odpovede'];
 
 const SESSION_SECONDS = 6 * 3600; // maximum CacheService
 const SUBMIT_GRACE_MS = 10 * 60 * 1000;
@@ -174,7 +176,7 @@ function progress_(user) {
 function ensureRow_(user, video, map) {
   if (map[video.order]) return map[video.order];
   const sh = sheet_(SHEET.PROGRESS);
-  const v = [user.email, user.name, video.order, 0, video.duration, false, '', '', 0, 0, false, ''];
+  const v = [user.email, user.name, video.order, 0, video.duration, false, '', '', 0, 0, false, '', ''];
   sh.appendRow(v);
   return (map[video.order] = { row: sh.getLastRow(), v: v });
 }
@@ -276,7 +278,21 @@ function startQuiz_(user, i) {
   if (rec.v[P.PASSED] === true) throw new Error('Tento test už máte splnený.');
   rec.v[P.QUIZ_START] = new Date();
   save_(rec);
-  return { questions: questions_(vids[i].order).map(q => ({ text: q.text, options: q.options })) };
+  const locked = locked_(rec);
+  return {
+    questions: questions_(vids[i].order).map(q => ({
+      text: q.text, options: q.options, locked: q.text in locked ? locked[q.text] : null,
+    })),
+  };
+}
+
+/** Otázky zamknuté po neúspešných pokusoch: { text otázky: index správnej odpovede }. */
+function locked_(rec) {
+  try {
+    return JSON.parse(rec.v[P.LOCKED] || '{}') || {};
+  } catch (e) {
+    return {};
+  }
 }
 
 function submitQuiz_(user, i, answers) {
@@ -289,6 +305,8 @@ function submitQuiz_(user, i, answers) {
   answers = Array.isArray(answers) ? answers : [];
 
   const qs = questions_(vids[i].order);
+  const locked = locked_(rec);
+  qs.forEach((q, k) => { if (q.text in locked) answers[k] = locked[q.text]; }); // zamknuté sa nedajú zmeniť
   let correct = 0;
   qs.forEach((q, k) => { if (Number(answers[k]) === q.correct) correct++; });
   const score = qs.length ? Math.round(correct / qs.length * 100) : 100;
@@ -300,9 +318,20 @@ function submitQuiz_(user, i, answers) {
   if (passed) {
     rec.v[P.PASSED] = true;
     rec.v[P.PASSED_AT] = new Date();
+  } else if (rec.v[P.TRIES] >= CONFIG.LOCK_AFTER_TRIES) {
+    qs.forEach((q, k) => { if (Number(answers[k]) === q.correct) locked[q.text] = q.correct; });
+    rec.v[P.LOCKED] = JSON.stringify(locked);
+    ensureLockedHeader_();
   }
   save_(rec);
-  return { score: score, correct: correct, total: qs.length, passed: passed };
+  const lockNext = !passed && rec.v[P.TRIES] >= CONFIG.LOCK_AFTER_TRIES;
+  return { score: score, correct: correct, total: qs.length, passed: passed, lockNext: lockNext };
+}
+
+/** Starší hárok Priebeh nemusí mať stĺpec pre zamknuté odpovede. */
+function ensureLockedHeader_() {
+  const cell = sheet_(SHEET.PROGRESS).getRange(1, P.LOCKED + 1);
+  if (!cell.getValue()) cell.setValue(PROGRESS_HEADER[P.LOCKED]).setFontWeight('bold');
 }
 
 // ---------- Nastavenia ----------

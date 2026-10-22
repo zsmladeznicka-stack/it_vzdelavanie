@@ -65,18 +65,25 @@ window.DemoApi = (() => {
     quiz(db, d) {
       const p = unlocked(db, d.video);
       if (!p.videoDone) throw new Error('Najprv dopozerajte video.');
-      return { questions: QUESTIONS[d.video].map(q => ({ text: q.text, options: q.options })) };
+      const locked = p.locked || {};
+      return { questions: QUESTIONS[d.video].map((q, k) => ({ text: q.text, options: q.options, locked: k in locked ? locked[k] : null })) };
     },
     submit(db, d) {
       const p = unlocked(db, d.video);
       const qs = QUESTIONS[d.video];
-      const correct = qs.filter((q, k) => d.answers[k] === q.correct).length;
+      const locked = p.locked || {};
+      const answers = qs.map((q, k) => (k in locked ? locked[k] : d.answers[k]));
+      const correct = qs.filter((q, k) => answers[k] === q.correct).length;
       const score = Math.round(correct / qs.length * 100);
       const passed = score >= 80;
       p.tries++;
       p.best = Math.max(p.best, score);
       if (passed) p.quizPassed = true;
-      return { score, correct, total: qs.length, passed };
+      else if (p.tries >= 3) {
+        qs.forEach((q, k) => { if (answers[k] === q.correct) locked[k] = q.correct; });
+        p.locked = locked;
+      }
+      return { score, correct, total: qs.length, passed, lockNext: !passed && p.tries >= 3 };
     },
     godmode: () => ({ ok: true }),
     godSkipVideo(db, d) {

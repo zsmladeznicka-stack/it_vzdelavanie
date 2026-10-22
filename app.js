@@ -551,11 +551,18 @@
     }
     quiz = { index: i, questions: r.questions };
     $('#quiz-title').textContent = `Test k videu ${i + 1}`;
-    $('#quiz-form').innerHTML = r.questions.map((q, k) => `
-      <fieldset class="question">
+    const anyLocked = r.questions.some((q) => q.locked != null);
+    $('#quiz-form').innerHTML = (anyLocked
+      ? `<div class="banner info">Otázky, ktoré ste už zodpovedali správne, sú zamknuté. Odpovedajte na zvyšné otázky.</div>`
+      : '') + r.questions.map((q, k) => {
+      const lock = q.locked != null;
+      return `
+      <fieldset class="question${lock ? ' locked' : ''}">
         <legend>${k + 1}. ${esc(q.text)}</legend>
-        ${q.options.map((o, j) => `<label><input type="radio" name="q${k}" value="${j}"> <span>${esc(o)}</span></label>`).join('')}
-      </fieldset>`).join('');
+        ${q.options.map((o, j) => `<label><input type="radio" name="q${k}" value="${j}"${lock && j === q.locked ? ' checked' : ''}${lock ? ' disabled' : ''}> <span>${esc(o)}</span></label>`).join('')}
+        ${lock ? '<p class="locked-note">✓ Zodpovedané správne – odpoveď je zamknutá.</p>' : ''}
+      </fieldset>`;
+    }).join('');
     $('#quiz-submit').disabled = false;
     show('quiz');
     if (godMode) markCorrectAnswers(i);
@@ -595,7 +602,9 @@
       html += `<p>Test ste úspešne splnili.</p>
         <button class="btn primary big" id="result-next">${last ? 'Získať osvedčenie' : `Pokračovať na video ${i + 2}`}</button>`;
     } else {
-      html += `<p>Na splnenie je potrebných ${state.passPercent} %. Test môžete zopakovať.</p>
+      html += `<p>Na splnenie je potrebných ${state.passPercent} %. Test môžete zopakovať.</p>`;
+      if (r.lockNext) html += `<p>Pri ďalšom pokuse budú otázky, ktoré ste zodpovedali správne, zamknuté – odpovedať budete len na zvyšné.</p>`;
+      html += `
         <button class="btn primary big" id="result-retry">Skúsiť znova</button>
         <p><button class="link" id="result-home">Späť na prehľad</button></p>`;
     }
