@@ -7,7 +7,7 @@ const CONFIG = {
   CLIENT_ID: '360446448624-q4u3huhlgho4ce4taptuofp0e4dveujp.apps.googleusercontent.com',
   DOMAIN: 'koharysuli.sk',
   SCHOOL_NAME: 'Základná škola Štefana Koháriho II. s VJM - II. Koháry István Alapiskola',
-  COURSE_NAME: 'Kybernetická bezpečnosť a digitálne nástroje vo vyučovaní',
+  COURSE_NAME: 'Digitálne nástroje vo vyučovaní a kybernetická bezpečnosť',
   COURSE_HOURS: 10, // rozsah vzdelávania na osvedčení vo vyučovacích hodinách (45 min)
   CERT_PREFIX: 'OSV',
   // Účty, ktoré si môžu zapnúť testovací režim (god mode)
