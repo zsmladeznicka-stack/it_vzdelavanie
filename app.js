@@ -232,12 +232,6 @@
     return '6 hodín';
   }
 
-  function latestStart() {
-    const [h, m] = state.closeLabel.split(':').map(Number);
-    const mins = h * 60 + m - Math.round(state.estimateHours * 60);
-    return `${Math.floor(mins / 60)}:${String(mins % 60).padStart(2, '0')}`;
-  }
-
   function renderHowto() {
     const n = state.videos.length;
     const total = state.videos.reduce((s, v) => s + v.duration, 0);
@@ -252,7 +246,7 @@
       <h3>Čas a ukladanie priebehu</h3>
       <ul>
         <li>Vzdelávanie prebieha v jeden deň a je dostupné <strong>do ${state.closeLabel}</strong>. Celé trvá približne
-          <strong>${durationText()}</strong>, preto odporúčame začať najneskôr o <strong>${latestStart()}</strong>.</li>
+          <strong>${durationText()}</strong> bez prestávok.</li>
         <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a pokračovať tam, kde ste skončili.</li>
         <li>Ak do ${state.closeLabel} nestihnete všetko, dokončené videá a testy sa nestratia.</li>
         <li>Osvedčenie si môžete stiahnuť kedykoľvek, aj neskôr.</li>
