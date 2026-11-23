@@ -15,7 +15,7 @@ const CONFIG = {
   PASS_PERCENT: 80,
   WATCH_PERCENT: 95, // koľko percent videa treba pozrieť, aby sa odomkol test
   // Od tohto neúspešného pokusu sa správne zodpovedané otázky pri ďalších pokusoch zamknú
-  LOCK_AFTER_TRIES: 3,
+  LOCK_AFTER_TRIES: 5,
 };
 
 const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici', SETTINGS: 'Nastavenia' };

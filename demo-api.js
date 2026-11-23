@@ -93,11 +93,11 @@ window.DemoApi = (() => {
       p.tries++;
       p.best = Math.max(p.best, score);
       if (passed) p.quizPassed = true;
-      else if (p.tries >= 3) {
+      else if (p.tries >= 5) {
         qs.forEach((q, k) => { if (answers[k] === q.correct) locked[p.test[k].k] = q.correct; });
         p.locked = locked;
       }
-      return { score, correct, total: qs.length, passed, lockNext: !passed && p.tries >= 3 };
+      return { score, correct, total: qs.length, passed, lockNext: !passed && p.tries >= 5 };
     },
     godmode: () => ({ ok: true }),
     godSkipVideo(db, d) {
