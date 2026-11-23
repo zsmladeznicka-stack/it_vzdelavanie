@@ -39,7 +39,7 @@ Kým nie je vyplnené `API_URL` v `config.js`, aplikácia beží v **ukážkovom
 5. Uložte, hore vyberte funkciu **setup** a kliknite **Spustiť**. Povoľte požadované oprávnenia.
    V tabuľke vzniknú hárky:
    - **Videa**: poradie, názov, YouTube ID, dĺžka v sekundách
-   - **Otazky**: číslo videa, otázka, možnosti A–D (C a D môžu byť prázdne), správna odpoveď (písmeno). Pri každom spustení testu sa poradie odpovedí A–D zamieša.
+   - **Otazky**: číslo videa, otázka, možnosti A–D (C a D môžu byť prázdne), správna odpoveď (písmeno). Pri každom spustení testu sa zamieša poradie otázok aj odpovedí A–D.
    - **Priebeh**: tu priebežne vidíte, kto koľko pozrel a ako dopadli testy
    - **Osvedcenia**: zoznam vydaných osvedčení s číslami
    - **Ucastnici**: čas prvého prihlásenia každého učiteľa (len evidencia)

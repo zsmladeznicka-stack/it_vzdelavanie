@@ -292,8 +292,8 @@ function startQuiz_(user, i) {
   if (!rec || rec.v[P.DONE] !== true) throw new Error('Najprv dopozerajte video.');
   if (rec.v[P.PASSED] === true) throw new Error('Tento test už máte splnený.');
   const locked = locked_(rec);
-  // otázky v poradí z tabuľky, poradie odpovedí sa pri každom spustení zamieša
-  const test = questions_(vids[i].order).map(q => ({ q: q, o: shuffle_(q.options.map((_, j) => j)) }));
+  // poradie otázok aj odpovedí sa pri každom spustení zamieša
+  const test = shuffle_(questions_(vids[i].order)).map(q => ({ q: q, o: shuffle_(q.options.map((_, j) => j)) }));
   rec.v[P.QUIZ_START] = new Date();
   rec.v[P.TEST] = JSON.stringify(test.map(x => ({ t: x.q.text, o: x.o })));
   save_(rec);
