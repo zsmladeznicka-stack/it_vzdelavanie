@@ -245,7 +245,7 @@
       </ul>
       <h3>Čas a ukladanie priebehu</h3>
       <ul>
-        <li>Vzdelávanie prebieha v jeden deň a je dostupné <strong>do ${state.closeLabel}</strong>. Celé trvá približne
+        <li>Vzdelávanie prebieha v jeden deň a je dostupné <strong>do ${state.closeLabel}</strong>. Celé vzdelávanie trvá približne
           <strong>${durationText()}</strong> bez prestávok.</li>
         <li class="must"><strong>Všetky videá a testy je potrebné dokončiť do ${state.closeLabel}.</strong></li>
         <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a pokračovať tam, kde ste skončili.</li>
@@ -321,12 +321,12 @@
       dl.className = 'banner admin warnbox';
       dl.innerHTML = '<span class="admin-icon" aria-hidden="true">!</span>'
         + `<div><strong>Do konca dnešného vzdelávania (${state.closeLabel}) zostáva ${fmtHM(remainingMs())}</strong>`
-        + `<br>Celé vzdelávanie trvá približne ${durationText()}. Váš priebeh sa priebežne ukladá.</div>`;
+        + `<br>Celé vzdelávanie trvá približne ${durationText()} bez prestávok. Váš priebeh sa priebežne ukladá.</div>`;
       dl.hidden = false;
     } else {
       dl.className = 'banner info';
       dl.innerHTML = `Všetky videá a testy je potrebné dokončiť dnes <strong>do ${state.closeLabel}</strong>. `
-        + `Celé trvá približne ${durationText()} bez prestávok.`;
+        + `Celé vzdelávanie trvá približne ${durationText()} bez prestávok.`;
       dl.hidden = false;
     }
     if (!state.active && state.canStart && cur !== -1) {
