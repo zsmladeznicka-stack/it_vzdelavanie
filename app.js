@@ -247,8 +247,8 @@
       <ul>
         <li>Vzdelávanie prebieha v jeden deň a je dostupné <strong>do ${state.closeLabel}</strong>. Celé trvá približne
           <strong>${durationText()}</strong> bez prestávok.</li>
+        <li class="must"><strong>Všetky videá a testy je potrebné dokončiť do ${state.closeLabel}.</strong></li>
         <li>Priebeh sa ukladá priebežne – môžete prestať, zatvoriť prehliadač a pokračovať tam, kde ste skončili.</li>
-        <li>Ak do ${state.closeLabel} nestihnete všetko, dokončené videá a testy sa nestratia.</li>
         <li>Osvedčenie si môžete stiahnuť kedykoľvek, aj neskôr.</li>
       </ul>
       <h3>Pozeranie videa</h3>
@@ -325,8 +325,8 @@
       dl.hidden = false;
     } else {
       dl.className = 'banner info';
-      dl.innerHTML = `Vzdelávanie je dnes dostupné <strong>do ${state.closeLabel}</strong>. `
-        + `Celé trvá približne ${durationText()}.`;
+      dl.innerHTML = `Všetky videá a testy je potrebné dokončiť dnes <strong>do ${state.closeLabel}</strong>. `
+        + `Celé trvá približne ${durationText()} bez prestávok.`;
       dl.hidden = false;
     }
     if (!state.active && state.canStart && cur !== -1) {
