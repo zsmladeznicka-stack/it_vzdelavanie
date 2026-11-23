@@ -44,8 +44,8 @@ window.DemoApi = (() => {
     active: true,
     canStart: true,
     admin: true, // v ukážke sa čas konca nevynucuje
-    closeAt: new Date().setHours(17, 0, 0, 0),
-    closeLabel: '17:00',
+    closeAt: new Date().setHours(16, 0, 0, 0),
+    closeLabel: '16:00',
     estimateHours: 6,
     now: Date.now(),
     videos: VIDEOS.map((v, i) => Object.assign({}, v, db.progress[i])),
