@@ -492,6 +492,27 @@ function deleteUserRows_(name, col, email) {
   }
 }
 
+// ---------- Plánované zapnutie ----------
+
+const PLANNED_START = '2026-12-04T07:55:00+01:00'; // kedy sa vzdelávanie samo zapne (stredoeurópsky čas)
+
+/** Spustite raz ručne z editora – naplánuje automatické zapnutie vzdelávania na PLANNED_START. */
+function naplanujZapnutie() {
+  ScriptApp.getProjectTriggers()
+    .filter(t => t.getHandlerFunction() === 'zapniVzdelavanie')
+    .forEach(t => ScriptApp.deleteTrigger(t)); // starší plán sa nahradí
+  ScriptApp.newTrigger('zapniVzdelavanie').timeBased().at(new Date(PLANNED_START)).create();
+}
+
+/** Zapíše 1 do „Vzdelávanie aktívne“ v hárku Nastavenia (volá ho naplánovaný spúšťač). */
+function zapniVzdelavanie() {
+  const sh = sheet_(SHEET.SETTINGS);
+  const i = sh.getDataRange().getValues()
+    .findIndex(r => String(r[0]).trim().toLowerCase().indexOf('vzdelávanie aktívne') === 0);
+  if (i === -1) throw new Error('V hárku Nastavenia chýba riadok „Vzdelávanie aktívne“.');
+  sh.getRange(i + 1, 2).setValue(1);
+}
+
 // ---------- Osvedčenie ----------
 
 function findCert_(email) {
