@@ -16,8 +16,6 @@ const CONFIG = {
   WATCH_PERCENT: 95, // koľko percent videa treba pozrieť, aby sa odomkol test
   // Od tohto neúspešného pokusu sa správne zodpovedané otázky pri ďalších pokusoch zamknú
   LOCK_AFTER_TRIES: 3,
-  // Koľko otázok sa náhodne vyberie z banky otázok k videu pri každom spustení testu
-  QUESTIONS_PER_TEST: 10,
 };
 
 const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici', SETTINGS: 'Nastavenia' };
@@ -293,12 +291,9 @@ function startQuiz_(user, i) {
   const rec = map[vids[i].order];
   if (!rec || rec.v[P.DONE] !== true) throw new Error('Najprv dopozerajte video.');
   if (rec.v[P.PASSED] === true) throw new Error('Tento test už máte splnený.');
-  const all = questions_(vids[i].order);
   const locked = locked_(rec);
-  // Po zamknutí odpovedí ostáva rovnaký výber otázok, inak sa z banky vyberá nanovo
-  const prev = Object.keys(locked).length ? currentTest_(rec, all) : [];
-  const chosen = prev.length ? prev.map(x => x.q) : shuffle_(all).slice(0, CONFIG.QUESTIONS_PER_TEST);
-  const test = chosen.map(q => ({ q: q, o: shuffle_(q.options.map((_, j) => j)) })); // poradie odpovedí
+  // otázky v poradí z tabuľky, poradie odpovedí sa pri každom spustení zamieša
+  const test = questions_(vids[i].order).map(q => ({ q: q, o: shuffle_(q.options.map((_, j) => j)) }));
   rec.v[P.QUIZ_START] = new Date();
   rec.v[P.TEST] = JSON.stringify(test.map(x => ({ t: x.q.text, o: x.o })));
   save_(rec);
