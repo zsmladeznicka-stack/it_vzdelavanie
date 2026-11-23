@@ -16,14 +16,16 @@ const CONFIG = {
   WATCH_PERCENT: 95, // koľko percent videa treba pozrieť, aby sa odomkol test
   // Od tohto neúspešného pokusu sa správne zodpovedané otázky pri ďalších pokusoch zamknú
   LOCK_AFTER_TRIES: 3,
+  // Koľko otázok sa náhodne vyberie z banky otázok k videu pri každom spustení testu
+  QUESTIONS_PER_TEST: 10,
 };
 
 const SHEET = { VIDEOS: 'Videa', QUESTIONS: 'Otazky', PROGRESS: 'Priebeh', CERTS: 'Osvedcenia', USERS: 'Ucastnici', SETTINGS: 'Nastavenia' };
 
 // Stĺpce hárku Priebeh (jeden riadok = jeden učiteľ × jedno video)
-const P = { EMAIL: 0, NAME: 1, VIDEO: 2, WATCHED: 3, DURATION: 4, DONE: 5, BEAT: 6, QUIZ_START: 7, TRIES: 8, BEST: 9, PASSED: 10, PASSED_AT: 11, LOCKED: 12 };
+const P = { EMAIL: 0, NAME: 1, VIDEO: 2, WATCHED: 3, DURATION: 4, DONE: 5, BEAT: 6, QUIZ_START: 7, TRIES: 8, BEST: 9, PASSED: 10, PASSED_AT: 11, LOCKED: 12, TEST: 13 };
 const PROGRESS_HEADER = ['E-mail', 'Meno', 'Video', 'Pozreté (s)', 'Dĺžka (s)', 'Video dopozerané', 'Posledný záznam',
-  'Test spustený', 'Pokusy', 'Najlepšie skóre (%)', 'Test splnený', 'Splnené dňa', 'Zamknuté odpovede'];
+  'Test spustený', 'Pokusy', 'Najlepšie skóre (%)', 'Test splnený', 'Splnené dňa', 'Zamknuté odpovede', 'Aktuálny test'];
 
 const SESSION_SECONDS = 6 * 3600; // maximum CacheService
 const SUBMIT_GRACE_MS = 10 * 60 * 1000;
@@ -191,7 +193,7 @@ function progress_(user) {
 function ensureRow_(user, video, map) {
   if (map[video.order]) return map[video.order];
   const sh = sheet_(SHEET.PROGRESS);
-  const v = [user.email, user.name, video.order, 0, video.duration, false, '', '', 0, 0, false, '', ''];
+  const v = [user.email, user.name, video.order, 0, video.duration, false, '', '', 0, 0, false, '', '', ''];
   sh.appendRow(v);
   return (map[video.order] = { row: sh.getLastRow(), v: v });
 }
@@ -291,14 +293,44 @@ function startQuiz_(user, i) {
   const rec = map[vids[i].order];
   if (!rec || rec.v[P.DONE] !== true) throw new Error('Najprv dopozerajte video.');
   if (rec.v[P.PASSED] === true) throw new Error('Tento test už máte splnený.');
-  rec.v[P.QUIZ_START] = new Date();
-  save_(rec);
+  const all = questions_(vids[i].order);
   const locked = locked_(rec);
+  // Po zamknutí odpovedí ostáva rovnaký výber otázok, inak sa z banky vyberá nanovo
+  const prev = Object.keys(locked).length ? currentTest_(rec, all) : [];
+  const chosen = prev.length ? prev.map(x => x.q) : shuffle_(all).slice(0, CONFIG.QUESTIONS_PER_TEST);
+  const test = chosen.map(q => ({ q: q, o: shuffle_(q.options.map((_, j) => j)) })); // poradie odpovedí
+  rec.v[P.QUIZ_START] = new Date();
+  rec.v[P.TEST] = JSON.stringify(test.map(x => ({ t: x.q.text, o: x.o })));
+  save_(rec);
   return {
-    questions: questions_(vids[i].order).map(q => ({
-      text: q.text, options: q.options, locked: q.text in locked ? locked[q.text] : null,
+    questions: test.map(x => ({
+      text: x.q.text,
+      options: x.o.map(j => x.q.options[j]),
+      locked: x.q.text in locked ? x.o.indexOf(locked[x.q.text]) : null,
     })),
   };
+}
+
+/** Otázky posledného spusteného testu s poradím odpovedí: [{ q: otázka, o: [pôvodné indexy] }]. */
+function currentTest_(rec, all) {
+  let saved;
+  try {
+    saved = JSON.parse(rec.v[P.TEST] || '[]') || [];
+  } catch (e) {
+    saved = [];
+  }
+  return saved
+    .map(x => ({ q: all.find(q => q.text === x.t), o: x.o }))
+    .filter(x => x.q && Array.isArray(x.o) && x.o.length === x.q.options.length);
+}
+
+function shuffle_(arr) {
+  const a = arr.slice();
+  for (let k = a.length - 1; k > 0; k--) {
+    const j = Math.floor(Math.random() * (k + 1));
+    const t = a[k]; a[k] = a[j]; a[j] = t;
+  }
+  return a;
 }
 
 /** Otázky zamknuté po neúspešných pokusoch: { text otázky: index správnej odpovede }. */
@@ -319,11 +351,18 @@ function submitQuiz_(user, i, answers) {
   if (!start) throw new Error('Test nebol spustený.');
   answers = Array.isArray(answers) ? answers : [];
 
-  const qs = questions_(vids[i].order);
+  const test = currentTest_(rec, questions_(vids[i].order));
+  if (!test.length) throw new Error('Test nebol spustený.');
+  const qs = test.map(x => x.q);
   const locked = locked_(rec);
-  qs.forEach((q, k) => { if (q.text in locked) answers[k] = locked[q.text]; }); // zamknuté sa nedajú zmeniť
+  // odpoveď = poradie zobrazenej možnosti → pôvodný index; zamknuté sa nedajú zmeniť
+  answers = test.map((x, k) => {
+    if (x.q.text in locked) return locked[x.q.text];
+    const a = Number(answers[k]); // -1 = nezodpovedané
+    return Number.isInteger(a) && a >= 0 && a < x.o.length ? x.o[a] : -1;
+  });
   let correct = 0;
-  qs.forEach((q, k) => { if (Number(answers[k]) === q.correct) correct++; });
+  qs.forEach((q, k) => { if (answers[k] === q.correct) correct++; });
   const score = qs.length ? Math.round(correct / qs.length * 100) : 100;
   const passed = score >= CONFIG.PASS_PERCENT;
 
@@ -334,7 +373,7 @@ function submitQuiz_(user, i, answers) {
     rec.v[P.PASSED] = true;
     rec.v[P.PASSED_AT] = new Date();
   } else if (rec.v[P.TRIES] >= CONFIG.LOCK_AFTER_TRIES) {
-    qs.forEach((q, k) => { if (Number(answers[k]) === q.correct) locked[q.text] = q.correct; });
+    qs.forEach((q, k) => { if (answers[k] === q.correct) locked[q.text] = q.correct; });
     rec.v[P.LOCKED] = JSON.stringify(locked);
     ensureLockedHeader_();
   }
@@ -435,9 +474,12 @@ function god_(user, req) {
       save_(rec);
       return state_(user);
     }
-    case 'godAnswers':
+    case 'godAnswers': {
       if (!vids[i]) throw new Error('Neznáme video.');
-      return { correct: questions_(vids[i].order).map(q => q.correct) };
+      const rec = map[vids[i].order];
+      const test = rec ? currentTest_(rec, questions_(vids[i].order)) : [];
+      return { correct: test.map(x => x.o.indexOf(x.q.correct)) };
+    }
     case 'godReset':
       deleteUserRows_(SHEET.PROGRESS, 0, user.email);
       deleteUserRows_(SHEET.USERS, 0, user.email);

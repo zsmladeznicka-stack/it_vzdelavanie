@@ -13,8 +13,18 @@ window.DemoApi = (() => {
   const QUESTIONS = VIDEOS.map((v, i) => [
     { text: `Ukážková otázka 1 k videu ${i + 1}: ktorá odpoveď je správna?`, options: ['Táto', 'Nie táto', 'Ani táto'], correct: 0 },
     { text: `Ukážková otázka 2 k videu ${i + 1}: koľko je 2 + 2?`, options: ['3', '4', '5', '22'], correct: 1 },
+    { text: `Ukážková otázka 3 k videu ${i + 1}: ktoré slovo je farba?`, options: ['Stôl', 'Modrá', 'Beh', 'Rýchlo'], correct: 1 },
   ]);
+  const QUESTIONS_PER_TEST = 2;
   const KEY = 'kurz-demo-v2';
+  const shuffle = (arr) => {
+    const a = arr.slice();
+    for (let k = a.length - 1; k > 0; k--) {
+      const j = Math.floor(Math.random() * (k + 1));
+      [a[k], a[j]] = [a[j], a[k]];
+    }
+    return a;
+  };
   let memory = null;
 
   const load = () => {
@@ -66,13 +76,21 @@ window.DemoApi = (() => {
       const p = unlocked(db, d.video);
       if (!p.videoDone) throw new Error('Najprv dopozerajte video.');
       const locked = p.locked || {};
-      return { questions: QUESTIONS[d.video].map((q, k) => ({ text: q.text, options: q.options, locked: k in locked ? locked[k] : null })) };
+      // ako server: náhodný výber z banky (po zamknutí rovnaký výber) a zamiešané odpovede
+      const keep = Object.keys(locked).length && p.test;
+      const picked = keep ? p.test.map(x => x.k) : shuffle(QUESTIONS[d.video].map((q, k) => k)).slice(0, QUESTIONS_PER_TEST);
+      p.test = picked.map(k => ({ k, o: shuffle(QUESTIONS[d.video][k].options.map((o, j) => j)) }));
+      return { questions: p.test.map(x => {
+        const q = QUESTIONS[d.video][x.k];
+        return { text: q.text, options: x.o.map(j => q.options[j]), locked: x.k in locked ? x.o.indexOf(locked[x.k]) : null };
+      }) };
     },
     submit(db, d) {
       const p = unlocked(db, d.video);
-      const qs = QUESTIONS[d.video];
+      if (!p.test) throw new Error('Test nebol spustený.');
+      const qs = p.test.map(x => QUESTIONS[d.video][x.k]);
       const locked = p.locked || {};
-      const answers = qs.map((q, k) => (k in locked ? locked[k] : d.answers[k]));
+      const answers = p.test.map((x, k) => (x.k in locked ? locked[x.k] : (d.answers[k] >= 0 ? x.o[d.answers[k]] : -1)));
       const correct = qs.filter((q, k) => answers[k] === q.correct).length;
       const score = Math.round(correct / qs.length * 100);
       const passed = score >= 80;
@@ -80,7 +98,7 @@ window.DemoApi = (() => {
       p.best = Math.max(p.best, score);
       if (passed) p.quizPassed = true;
       else if (p.tries >= 3) {
-        qs.forEach((q, k) => { if (answers[k] === q.correct) locked[k] = q.correct; });
+        qs.forEach((q, k) => { if (answers[k] === q.correct) locked[p.test[k].k] = q.correct; });
         p.locked = locked;
       }
       return { score, correct, total: qs.length, passed, lockNext: !passed && p.tries >= 3 };
@@ -94,7 +112,7 @@ window.DemoApi = (() => {
       Object.assign(db.progress[d.video], { watched: VIDEOS[d.video].duration, videoDone: true, quizPassed: true, best: 100 });
       return state(db);
     },
-    godAnswers: (db, d) => ({ correct: QUESTIONS[d.video].map(q => q.correct) }),
+    godAnswers: (db, d) => ({ correct: (db.progress[d.video].test || []).map(x => x.o.indexOf(QUESTIONS[d.video][x.k].correct)) }),
     godReset(db) {
       db.progress = VIDEOS.map(() => ({ watched: 0, videoDone: false, quizPassed: false, best: 0, tries: 0 }));
       db.cert = null;
